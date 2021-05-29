@@ -1,0 +1,6 @@
+# created by 'Sepehr Noey'
+
+#log results are ignored for users
+log/
+#code snippet testing class
+src/Test.java
