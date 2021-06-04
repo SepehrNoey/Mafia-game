@@ -20,7 +20,7 @@ import java.util.Scanner;
 public class RunClient {
     public static void main(String[] args)
     {
-        if (SharedData.getSharedData().getPlayers().size() >= 10)
+        if (SharedData.getSharedData().getPlayers().size() >= SharedData.getSharedData().getPlayerNum())
         {
             System.out.println("Sorry! No empty seat for a new player.");
             System.exit(0);

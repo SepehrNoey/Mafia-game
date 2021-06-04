@@ -18,6 +18,7 @@ public class SharedData implements Serializable {
     private static SharedData sharedData;
     private List<Player> players;
     private List<Message> chats;
+    private int playerNum;
     // and turn...
 
     /**
@@ -39,9 +40,6 @@ public class SharedData implements Serializable {
         else
             return sharedData;
     }
-
-
-
 
     /**
      * to add player when player is created.
@@ -73,5 +71,21 @@ public class SharedData implements Serializable {
      */
     public List<Player> getPlayers() {
         return players;
+    }
+
+    /**
+     * to change number of players
+     * @param playerNum
+     */
+    public void setPlayerNum(int playerNum) {
+        this.playerNum = playerNum;
+    }
+
+    /**
+     * to get number of players
+     * @return number of players
+     */
+    public int getPlayerNum() {
+        return playerNum;
     }
 }
