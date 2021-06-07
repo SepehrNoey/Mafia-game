@@ -17,9 +17,7 @@ import java.util.List;
 public class SharedData implements Serializable {
     private static SharedData sharedData;
     private List<Player> players;
-    private List<Message> chats;
-    private int playerNum;
-    // and turn...
+//    private StateEnum stateEnum; // i must update this field in game loop!!
 
     /**
      * constructor
@@ -27,7 +25,6 @@ public class SharedData implements Serializable {
      */
     private SharedData(){
         players = new ArrayList<>();
-        chats = new ArrayList<>();
     }
 
     /**
@@ -36,9 +33,9 @@ public class SharedData implements Serializable {
      */
     public static SharedData getSharedData(){
         if (sharedData == null)
-            return new SharedData();
-        else
-            return sharedData;
+            sharedData = new SharedData();
+        return sharedData;
+
     }
 
     /**
@@ -58,14 +55,6 @@ public class SharedData implements Serializable {
     }
 
     /**
-     * to add a chat to the list of chats
-     * @param chat is the entered chat
-     */
-    public void addChat(Message chat){
-        sharedData.chats.add(chat);
-    }
-
-    /**
      * to access players in other classes
      * @return players
      */
@@ -74,18 +63,62 @@ public class SharedData implements Serializable {
     }
 
     /**
-     * to change number of players
-     * @param playerNum
+     * to access alive players
+     *
+     * @return a List of alive players(for using , cast to ArrayList)
      */
-    public void setPlayerNum(int playerNum) {
-        this.playerNum = playerNum;
+    public List<Player> getAlives(){
+        List<Player> alives = new ArrayList<>();
+        for (Player player:players)
+        {
+            if (player.isAlive())
+                alives.add(player);
+        }
+        return alives;
     }
 
     /**
-     * to get number of players
-     * @return number of players
+     * to access alive mafias of the game
+     * @return a List of alive mafias (for using , cast to ArrayList)
      */
-    public int getPlayerNum() {
-        return playerNum;
+    public List<Player> getAliveMafias(){
+        List<Player> aliveMafs = new ArrayList<>();
+        for (Player player: players)
+        {
+            if (player.isAlive() && player.getGroup() == Role_Group.MAFIA_GROUP)
+                aliveMafs.add(player);
+        }
+        return aliveMafs;
     }
+
+    /**
+     * to access alive citizens of the game
+     *
+     * @return a List of alive citizens (for using , cast to ArrayList)
+     */
+    public List<Player> getAliveCitizens(){
+        List<Player> aliveCits = new ArrayList<>();
+        for (Player player: players)
+        {
+            if (player.isAlive() && player.getGroup() == Role_Group.CITIZEN_GROUP)
+                aliveCits.add(player);
+        }
+        return aliveCits;
+    }
+//
+//    /**
+//     * to know from other classes that it is night or day or voting time
+//     * @return stateEnum
+//     */
+//    public StateEnum getStateEnum() {
+//        return stateEnum;
+//    }
+//
+//    /**
+//     * to update state of game in other classes
+//     * @param stateEnum new state of game
+//     */
+//    public void setStateEnum(StateEnum stateEnum) {
+//        this.stateEnum = stateEnum;
+//    }
 }
