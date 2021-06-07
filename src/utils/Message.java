@@ -13,6 +13,7 @@ public class Message implements Serializable {
     private ChatroomType chatroomType;
     private String content;
     private MessageTypes msgType;
+    private String target;
 
     /**
      * constructor
@@ -58,5 +59,21 @@ public class Message implements Serializable {
      */
     public MessageTypes getMsgType() {
         return msgType;
+    }
+
+    /**
+     * to access target name
+     * @return target name
+     */
+    public String getTarget() {
+        return target;
+    }
+
+    /**
+     * to set target name
+     * @param target is the name of target
+     */
+    public void setTarget(String target) {
+        this.target = target;
     }
 }

@@ -104,11 +104,13 @@ public abstract class Player implements Serializable {
      * to send a single message
      * @param content content of message
      * @param type type of message
+     * @param target is the name of target (if exists) , this parameter must be null when there is no target
      */
-    public void sendMsg(String content , ChatroomType type , MessageTypes msgType){
+    public void sendMsg(String content , ChatroomType type , MessageTypes msgType , String target){
 
         try{
             Message msg = new Message(getName() , content , type , msgType);
+            msg.setTarget(target);
             outObj.writeObject(msg);
         }catch (IOException e)
         {
@@ -135,19 +137,19 @@ public abstract class Player implements Serializable {
         }
         return null;
     }
-
-    public boolean vote(String plyName){ // must be overridden for some characters
-        ArrayList<Player> alives = (ArrayList<Player>) SharedData.getSharedData().getAlives();
-        for (Player player:alives)
-        {
-            if (player.getName().equalsIgnoreCase(plyName))
-            {
-                myVote = player;
-                return true;
-            }
-        }
-        return false;
-    }
+//
+//    public boolean vote(String plyName){ // must be overridden for some characters
+//        ArrayList<Player> alives = (ArrayList<Player>) SharedData.getSharedData().getAlives();
+//        for (Player player:alives)
+//        {
+//            if (player.getName().equalsIgnoreCase(plyName))
+//            {
+//                myVote = player;
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     /**
      * to know if is ready to join the game

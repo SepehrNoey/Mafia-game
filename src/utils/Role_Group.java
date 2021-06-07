@@ -20,7 +20,7 @@ public enum Role_Group implements Serializable {
 
     DOCTOR,
     DETECTIVE,
-    PROFESSIONAL,
+    SNIPER,
     CITIZEN,
     MAYOR,
     PSYCHOLOGIST,

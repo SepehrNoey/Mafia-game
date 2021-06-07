@@ -1,9 +1,8 @@
 package client_side;
 
 import utils.ChatroomType;
+import utils.MessageTypes;
 import utils.Role_Group;
-import utils.SharedData;
-import utils.StateEnum;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
@@ -41,39 +40,86 @@ public class MsgSender implements Runnable{
         Scanner scanner = new Scanner(System.in);
         while (!thread.isInterrupted())
         {
+            scanner.nextLine();
             String userInput = scanner.nextLine();
-            if (userInput.trim().equalsIgnoreCase("exit")) // exiting keyword // maybe should be handled later
+            String[] split = userInput.trim().split(" ");
+            String target = null;
+            if (split.length >= 2)
             {
-                System.out.println("Thanks for playing with us!");
+                for (int i = 1 ; i < split.length ; i++)
+                    target += split[i] + " ";
+                target = target.trim();
+            }
+
+            // what command is entered , or a normal chat
+
+            // one word commands
+            if (userInput.trim().equalsIgnoreCase("exit")) // exiting keyword // maybe should be handled later by god
+            {
+                player.sendMsg(player.getName() + " exited",ChatroomType.TO_GOD , MessageTypes.ACTIONS_EXIT , null);
                 Logger.log(player.getName() + " exited." , LogLevels.INFO , this.getClass().getName());
+                System.out.println("Thanks for playing with us :)");
                 System.exit(0);
             }
-            // the message sender itself , recognizes where does this message wants to be go
+            else if (split.length >= 2 && split[0].equalsIgnoreCase("cancel") && player.getRole() == Role_Group.MAYOR)
+            {
+                player.sendMsg(player.getName() + " requests for cancel voting." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_MAYOR_ORDERED_CANCEL_VOTING , null);
+            }
 
-//            if (stateEnum == StateEnum.FIRST_NIGHT)
-//            {
-//
-//            }
+            // two word commands
 
-//            String[] split = userInput.trim().split(" ");
-//            if (split.length == 2 && split[0].equals("vote"))   // voting keyword
-//            {
-//                boolean state =  player.vote(split[1]);
-//                if (!state)
-//                {
-//                    System.out.println("Didn't find player. Try again.");
-//                    Logger.log("can't find player with this name: " + split[1] ,
-//                            LogLevels.WARN , getClass().getName());
-//                }
-//                else {
-//                    if(player.getGroup() == Role_Group.CITIZEN_GROUP)
-//                        player.sendMsg(player.getName() + " voted " + split[1] ,ChatroomType.PUBLIC_CHATROOM);
-//                    else   // god should recognize if it should be sent to public chatroom or mafia chatroom
-//                        player.sendMsg(player.getName() + " voted " + split[1] , ChatroomType.TO_GOD);
-//                }
-//            }
-//            else   // normal message
-//                player.sendMsg(userInput ,chatroomType);
+            else if (split.length >= 2 && split[0].equalsIgnoreCase("vote")) // invalid player name should be handled
+            {
+                player.sendMsg(player.getName() + " voted " + target, ChatroomType.TO_GOD
+                        ,MessageTypes.ACTIONS_PLAYER_VOTED , target);
+            }
+            else if (split.length >= 2 && split[0].equalsIgnoreCase("kill"))
+            {
+                if (player.getRole() == Role_Group.GOD_FATHER)
+                    player.sendMsg(player.getName() + " requests for killing." + target , ChatroomType.TO_GOD
+                            , MessageTypes.ACTIONS_GODFATHER_ORDERED_KILL , target);
+                else if (player.getRole() == Role_Group.SNIPER)
+                    player.sendMsg(player.getName() + " requests for killing." + target , ChatroomType.TO_GOD
+                    ,MessageTypes.ACTIONS_SNIPER_ORDERED_KILL , target);
+                else {
+                    System.out.println("Sorry ,you can't request for killing!");
+                    Logger.log(player.getName() + " sent invalid request for killing " + target , LogLevels.WARN, getClass().getName());
+                }
+            }
+            else if (split.length >= 2 && split[0].equalsIgnoreCase("save"))
+            {
+                if (player.getRole() == Role_Group.DOCTOR_LECTER)
+                    player.sendMsg(player.getName() + " requests for saving " + target + "." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_LECTER_ORDERED_SAVE , target);
+                else if (player.getRole() == Role_Group.DOCTOR)
+                    player.sendMsg(player.getName() + " requests for saving " + target + "." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_DOCTOR_ORDERED_SAVE , target);
+                else {
+                    System.out.println("Sorry ,you can't request for saving!");
+                    Logger.log(player.getName() + " sent invalid request for saving " + target , LogLevels.WARN, getClass().getName());
+                }
+            }
+            else if (split.length >= 2 && split[0].equalsIgnoreCase("silence") && player.getRole() == Role_Group.PSYCHOLOGIST)
+            {
+                player.sendMsg(player.getName() + " requests for silencing " + target , ChatroomType.TO_GOD , MessageTypes.ACTIONS_PSYCHOLOGIST_ORDERED_SILENCE , target);
+            }
+
+            // inquiry can be one word or two word command , depending on player's role
+
+            else if (userInput.trim().equalsIgnoreCase("inquiry"))
+            {
+                if (player.getRole() == Role_Group.DETECTIVE)
+                    player.sendMsg(player.getName() + " requests for inquiry for " + target + "." ,ChatroomType.TO_GOD , MessageTypes.ACTIONS_DETECTIVE_ORDERED_INQUIRY , target);
+                else if (player.getRole() == Role_Group.DIE_HARD)
+                    player.sendMsg(player.getName() + " requests for inquiry." ,ChatroomType.TO_GOD , MessageTypes.ACTIONS_DIEHARD_ORDERED_INQUIRY , null);
+                else
+                {
+                    System.out.println("Sorry ,you can't request inquiry!");
+                    Logger.log("invalid request for inquiry" , LogLevels.WARN, getClass().getName());
+                }
+            }
+
+            else{ // normal chat
+                player.sendMsg(userInput , ChatroomType.TO_GOD , MessageTypes.NORMAL_CHAT , null);
+            }
         }
     }
 }
