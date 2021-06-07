@@ -16,15 +16,15 @@ import java.util.Scanner;
  * @author Sepehr Noey
  * @version 1.0
  */
-public abstract class Player implements Serializable {
+public class Player implements Serializable {
     private String name;
     private boolean isReady;
     private boolean isAlive;
     private boolean isAllowedToChat;
     private Socket liveConnection;
-    private OutputStream outputStream;
+//    private OutputStream outputStream;
     private ObjectOutputStream outObj;
-    private InputStream inputStream;
+//    private InputStream inputStream;
     private ObjectInputStream inObj;
     private Role_Group role;
     private Role_Group group;
@@ -50,16 +50,12 @@ public abstract class Player implements Serializable {
         this.group = group;
         userInput = new Scanner(System.in);
         try {
-            outputStream = liveConnection.getOutputStream();
-            outObj = new ObjectOutputStream(outputStream);
-            inputStream = liveConnection.getInputStream();
-            inObj = new ObjectInputStream(inputStream);
+            outObj = new ObjectOutputStream(liveConnection.getOutputStream());
+            inObj = new ObjectInputStream(liveConnection.getInputStream());
             msgSender = new MsgSender(this); // may have bug here
             msgReceiver = new MsgReceiver(this);
             startMsgSender();
             startMsgReceiver();
-//            execService = Executors.newFixedThreadPool(1);
-//            execService.execute(msgReceiver);
             Logger.log(getName() + " added and its msgReceiver and msgSender are running - start playing",
                     LogLevels.INFO ,getClass().getName());
 
@@ -69,6 +65,32 @@ public abstract class Player implements Serializable {
             System.exit(-1);
         }
     }
+
+    /**
+     * the main playing loop of the client side , it takes action depending on server orders
+     *
+     */
+    public void playLoop(){
+        sendMsg(getName() + " joined game." , ChatroomType.TO_GOD , MessageTypes.PLAYER_JOINED_SUCCESSFULLY , null);
+        Message msg = null;
+        while (true)
+        {
+            try {
+                msg = (Message) inObj.readObject();
+
+            }catch (ClassNotFoundException e)
+            {
+                Logger.log("can't find Message class" , LogLevels.ERROR , getClass().getName());
+            }catch (IOException e)
+            {
+                Logger.log("error in getting message from server." , LogLevels.ERROR , getClass().getName());
+            }
+        }
+    }
+
+
+
+
 
     /**
      * to access name
@@ -94,11 +116,6 @@ public abstract class Player implements Serializable {
         return group;
     }
 
-    /**
-     * a method to do player's acts at night
-     *
-     */
-    public abstract void act();
 
     /**
      * to send a single message

@@ -3,8 +3,10 @@ package utils;
 import java.io.Serializable;
 
 public enum MessageTypes implements Serializable {
-    ACTIONS_JOIN,
+    JOIN_REQUEST,
+    PLAYER_JOINED_SUCCESSFULLY,
     ACTIONS_EXIT,
+
 
     GOD_TO_CLIENT_STATE_DESCRIPTION,
     NORMAL_CHAT,
