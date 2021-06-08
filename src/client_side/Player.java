@@ -27,7 +27,6 @@ public class Player implements Serializable {
     private Role_Group group;
     private MsgReceiver msgReceiver;
     private MsgSender msgSender;
-    private Player myVote;
     private Message startMsg;
     private Config config;
 
@@ -218,7 +217,14 @@ public class Player implements Serializable {
             }else if (msg.getMsgType() == MessageTypes.END_OF_GAME)
             {
                 System.out.println(msg.getContent()); // special content should be made in server
-
+                try {
+                    inObj.close();
+                    outObj.close();
+                    liveConnection.close();
+                }catch (IOException e)
+                {
+                    Logger.log("can't close objectInput or output , or socket." , LogLevels.WARN , getClass().getName());
+                }
                 System.exit(0);
             }
         }
@@ -346,13 +352,6 @@ public class Player implements Serializable {
      */
     public void startMsgSender(){
         msgSender.getThread().start();
-    }
-
-    /**
-     * to clear voted before players
-     */
-    public void clearVote(){
-        myVote = null;
     }
 
     /**

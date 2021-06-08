@@ -2,6 +2,7 @@ package server_side;
 
 import client_side.Player;
 import utils.ChatroomType;
+import utils.Config;
 import utils.Message;
 import utils.MessageTypes;
 import utils.logClasses.LogLevels;
@@ -14,26 +15,22 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Server {
-    private final String name = "God";
+    private final String name;
     private ServerSocket welcomeSocket;
     private HashMap<Player, ClientHandler> playersHandlers;
     private ChatRoom publicChatroom;
     private ChatRoom mafiaChatroom;
-    private List<Player> gameWatchers;
+    private List<Player> gameWatchers; // dead players , which want to see the rest of game
     private List<Player> observers;
-
+    private Config gameConfig;
 
     /**
      * constructor - singleton pattern
      *
      */
-    private Server(){
-        try {
-             welcomeSocket = new ServerSocket(9000);
-        }catch (IOException e)
-        {
-            Logger.log("problem in making server socket." , LogLevels.ERROR , this.getClass().getName());
-        }
+    public Server(int port)throws IOException{
+        this.name = "God_" + port;
+        welcomeSocket = new ServerSocket(port);
         playersHandlers = new HashMap<>();
         gameWatchers = new ArrayList<>();
         observers = new ArrayList<>();
@@ -106,5 +103,21 @@ public class Server {
         else {
             Logger.log("trying to make invalid chatroom" , LogLevels.WARN , getClass().getName());
         }
+    }
+
+    /**
+     * getter
+     * @return welcomeSocket
+     */
+    public ServerSocket getWelcomeSocket() {
+        return welcomeSocket;
+    }
+
+    /**
+     * getter
+     * @return name of server
+     */
+    public String getName() {
+        return name;
     }
 }
