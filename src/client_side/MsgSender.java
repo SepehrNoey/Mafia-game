@@ -61,6 +61,10 @@ public class MsgSender implements Runnable{
                 System.out.println("Thanks for playing with us :)");
                 System.exit(0);
             }
+            else if (userInput.trim().equalsIgnoreCase("ready"))
+            {
+                player.sendMsg(player.getName() + " is ready to start." , ChatroomType.TO_GOD ,MessageTypes.PLAYER_IS_READY , null);
+            }
             else if (split.length >= 2 && split[0].equalsIgnoreCase("cancel") && player.getRole() == Role_Group.MAYOR)
             {
                 player.sendMsg(player.getName() + " requests for cancel voting." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_MAYOR_ORDERED_CANCEL_VOTING , null);
@@ -75,7 +79,7 @@ public class MsgSender implements Runnable{
             }
             else if (split.length >= 2 && split[0].equalsIgnoreCase("kill"))
             {
-                if (player.getRole() == Role_Group.GOD_FATHER)
+                if (player.getRole() == Role_Group.GODFATHER)
                     player.sendMsg(player.getName() + " requests for killing." + target , ChatroomType.TO_GOD
                             , MessageTypes.ACTIONS_GODFATHER_ORDERED_KILL , target);
                 else if (player.getRole() == Role_Group.SNIPER)

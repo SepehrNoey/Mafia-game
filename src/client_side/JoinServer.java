@@ -1,11 +1,13 @@
 package client_side;
 
 import utils.ChatroomType;
+import utils.Config;
 import utils.Message;
 import utils.MessageTypes;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
+import javax.swing.text.Style;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -65,7 +67,33 @@ public class JoinServer {
                             msg = (Message) in.readObject(); // should has this content : allow(or deny)
                             if (msg.getContent().equalsIgnoreCase("allow"))
                             {
+                                System.out.println("Accepted.Getting settings from server...");
                                 Player player = new Player(name , connection , null , null);
+                                Config config = (Config)in.readObject();
+                                if (config != null)
+                                {
+                                    player.setConfig(config);
+                                    player.startMsgSender();
+                                    player.startMsgReceiver();
+                                    System.out.println("Waiting for other players to join...");
+                                    System.out.println("If you are ready to join , enter 'ready'");
+                                    try {
+                                        Thread.sleep(1000); // is used to make sure that the start message is locked in msgReceiver
+                                    }catch (InterruptedException e)
+                                    {
+                                        Logger.log("interrupted in sleeping for 1000 ms." , LogLevels.WARN , JoinServer.class.getName());
+                                    }
+                                    synchronized (player.getStartMsg()){
+                                        player.stopMsgReceiver();
+                                        player.stopMsgSender();
+                                        player.playLoop();  // starting point for game in client side
+                                    }
+                                }
+                                else {
+                                    Logger.log(player.getName() + " can't get settings from server." , LogLevels.ERROR , JoinServer.class.getName());
+                                    System.out.println("Couldn't get settings from server, exiting...");
+                                    System.exit(-1);
+                                }
                                 player.playLoop();
                                 break;
                             }
@@ -84,7 +112,7 @@ public class JoinServer {
                 {
                     Logger.log("can't make object input or output stream , or can't get message object from server." , LogLevels.ERROR , JoinServer.class.getName());
                 }catch (ClassNotFoundException e){
-                    Logger.log("can't find class Message" , LogLevels.ERROR , JoinServer.class.getName());
+                    Logger.log("can't find class Message or class Config" , LogLevels.ERROR , JoinServer.class.getName());
                 }
             break;
 

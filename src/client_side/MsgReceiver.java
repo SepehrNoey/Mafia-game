@@ -2,6 +2,9 @@ package client_side;
 
 import utils.ChatroomType;
 import utils.Message;
+import utils.MessageTypes;
+import utils.logClasses.LogLevels;
+import utils.logClasses.Logger;
 
 /**
  * this class is used to make it possible to get new messages while other tasks(for example sending message) are running
@@ -33,15 +36,24 @@ public class MsgReceiver implements Runnable{
 
     @Override
     public void run() {
+        Message fakeLock = new Message("msgReceiver","fakeLock" , ChatroomType.TO_GOD ,MessageTypes.FAKE_MESSAGE);
+        player.setStartMsg(fakeLock);
+
         while (!thread.isInterrupted())
         {
-            Message msg = player.getMsg();
-            if(msg != null)
-            {
-                if(msg.getChatroomType() == ChatroomType.MAFIA_CHATROOM)
-                    System.out.print("\033[0;31m");
-                System.out.println(msg.getSender() + ": "  + msg.getContent());
-                System.out.print("\033[0m");
+            synchronized (fakeLock){
+                Message msg = player.getMsg();
+                if(msg != null)
+                {
+                    if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_START) {
+                        Logger.log(player.getName() + " got start message.", LogLevels.INFO , getClass().getName());
+                        fakeLock = msg; // now , the lock(startMsg of player) is free , and the JoinServer can continue
+                    }
+                    if(msg.getChatroomType() == ChatroomType.MAFIA_CHATROOM)
+                        System.out.print("\033[0;31m");
+                    System.out.println(msg.getSender() + ": "  + msg.getContent());
+                    System.out.print("\033[0m");
+                }
             }
         }
     }

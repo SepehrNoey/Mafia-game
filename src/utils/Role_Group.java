@@ -12,7 +12,7 @@ import java.io.Serializable;
 public enum Role_Group implements Serializable {
     MAFIA_GROUP,
 
-    GOD_FATHER,
+    GODFATHER,
     DOCTOR_LECTER,
     NORMAL_MAFIA,
 

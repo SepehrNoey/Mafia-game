@@ -1,6 +1,8 @@
 package utils;
 
-public class Config {
+import java.io.Serializable;
+
+public class Config implements Serializable {
     private static int PLAYER_NUMBERS = 10;
     private static int DAY_TIME = 5; // 5 minute
     private static int EACH_ROLE_NIGHT_ACTING_TIME = 15; // for example , doctor have 15 seconds to decide who to save
