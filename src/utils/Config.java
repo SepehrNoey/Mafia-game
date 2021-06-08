@@ -3,40 +3,41 @@ package utils;
 import java.io.Serializable;
 
 public class Config implements Serializable {
-    private static int PLAYER_NUMBERS = 10;
-    private static int DAY_TIME = 5; // 5 minute
-    private static int EACH_ROLE_NIGHT_ACTING_TIME = 15; // for example , doctor have 15 seconds to decide who to save
-    private static int VOTING_TIME = 30; // 30 seconds
-    private static int MAFIA_NUMBER = 3;
-    private static int CITIZEN_NUMBER = 7;
+    private int PLAYER_NUMBERS = 10;
+    private int DAY_TIME = 5; // 5 minute
+    private int EACH_ROLE_NIGHT_ACTING_TIME = 15; // for example , doctor have 15 seconds to decide who to save
+    private int VOTING_TIME = 30; // 30 seconds
+    private int MAFIA_NUMBER = 3;
+    private int CITIZEN_NUMBER = 7;
+    private int DEFENSE_TIME = 1; // 1 minute
     // maybe more
 
     /**
      * getter
      * @return PLAYER_NUMBERS
      */
-    public static int getPlayerNumbers() {
+    public int getPlayerNumbers() {
         return PLAYER_NUMBERS;
     }
     /**
      * getter
      * @return DAY_TIME
      */
-    public static int getDayTime() {
+    public int getDayTime() {
         return DAY_TIME;
     }
     /**
      * getter
      * @return EACH_ROLE_NIGHT_ACTING_TIME
      */
-    public static int getEachRoleNightActingTime() {
+    public int getEachRoleNightActingTime() {
         return EACH_ROLE_NIGHT_ACTING_TIME;
     }
     /**
      * getter
      * @return VOTING_TIME
      */
-    public static int getVotingTime() {
+    public int getVotingTime() {
         return VOTING_TIME;
     }
 
@@ -44,7 +45,7 @@ public class Config implements Serializable {
      * getter
      * @return MAFIA_NUMBER
      */
-    public static int getMafiaNumber() {
+    public int getMafiaNumber() {
         return MAFIA_NUMBER;
     }
 
@@ -52,7 +53,15 @@ public class Config implements Serializable {
      * getter
      * @return CITIZEN_NUMBER
      */
-    public static int getCitizenNumber() {
+    public int getCitizenNumber() {
         return CITIZEN_NUMBER;
+    }
+
+    /**
+     * getter
+     * @return defense time(in minute)
+     */
+    public int getDEFENSE_TIME() {
+        return DEFENSE_TIME;
     }
 }

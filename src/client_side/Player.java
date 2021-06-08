@@ -16,18 +16,15 @@ import java.util.Scanner;
  * @version 1.0
  */
 public class Player implements Serializable {
-    private String name;
-    private boolean isReady;
+    private final String name;
+//    private boolean isReady;
     private boolean isAlive;
     private boolean isAllowedToChat;
     private Socket liveConnection;
-//    private OutputStream outputStream;
     private ObjectOutputStream outObj;
-//    private InputStream inputStream;
     private ObjectInputStream inObj;
     private Role_Group role;
     private Role_Group group;
-    private Scanner userInput;
     private MsgReceiver msgReceiver;
     private MsgSender msgSender;
     private Player myVote;
@@ -43,20 +40,17 @@ public class Player implements Serializable {
      */
     public Player(String name , Socket socket , Role_Group role , Role_Group group){
         this.name = name;
-        isReady = false;
+//        isReady = false;
         isAlive = true;
         isAllowedToChat = true;
         liveConnection = socket;
         this.role = role;
         this.group = group;
-        userInput = new Scanner(System.in);
         try {
             outObj = new ObjectOutputStream(liveConnection.getOutputStream());
             inObj = new ObjectInputStream(liveConnection.getInputStream());
             msgSender = new MsgSender(this); // may have bug here
             msgReceiver = new MsgReceiver(this);
-//            startMsgSender();
-//            startMsgReceiver();
             Logger.log(getName() + " added.", LogLevels.INFO ,getClass().getName());
 
         }catch (IOException e){
@@ -72,10 +66,7 @@ public class Player implements Serializable {
      */
     public void playLoop(){
         Message msg = null;
-
-        System.out.println("All players joined.");
-        stopMsgSender();
-        stopMsgReceiver();
+        System.out.println("All players are joined and ready.");
         while (true)
         {
             msg = getMsg();
@@ -103,7 +94,7 @@ public class Player implements Serializable {
                 if (getRole() == Role_Group.MAYOR || getRole() == Role_Group.DOCTOR || getGroup() == Role_Group.MAFIA_GROUP) {
                     // teammates in this format: sepehr,ali,sahand, ... or it can be 'no body' which means no teammates
                     String[] split = getMsg().getContent().split(",");
-                    if (split[0].equals("no body")) {
+                    if (split[0].equals("nobody")) {
                         System.out.println("You have no teammate at nights!");
                     } else {
                         System.out.println("Your teammates:");
@@ -114,23 +105,124 @@ public class Player implements Serializable {
                         }
                     }
                 }
-
-            } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT) {
-                if (getGroup() == Role_Group.MAFIA_GROUP) {
-                    startMsgSender();
-                    startMsgReceiver();
+                System.out.println("Night greeting ended.going for day...");
+                try {
+                    Thread.sleep(3000);
+                }catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in end of night greeting sleep." , LogLevels.WARN , getClass().getName());
                 }
+
+            } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT){ // all acts are implemented by typing the act name by client
+                int roleTime = config.getEachRoleNightActingTime();
+                System.out.println("It's night now.");
+                System.out.print("You have ");
+                System.out.print("\033[0;31m");
+                System.out.print(String.valueOf(roleTime) + "s");
+                System.out.print("\033[0m");
+                System.out.println(" for doing your role...");
+                startMsgSender();
+                startMsgReceiver();
+                try {
+                    Thread.sleep(roleTime * 1000);
+                }catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in sleeping , in night act." , LogLevels.WARN , getClass().getName());
+                }
+                System.out.println("Time ended.going for day...");
+                stopMsgSender();
+                stopMsgReceiver();
+                try {
+                    Thread.sleep(3000);
+                }catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in end of night act sleep." , LogLevels.WARN , getClass().getName());
+                }
+            }else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT)
+            {
+
+                System.out.println("Last night summary: ");
+                System.out.print("\033[0;36m");
+                System.out.println(msg.getContent());
+                System.out.print("\033[0m");
+                startMsgSender();
+                startMsgReceiver();
+                try {
+                    Thread.sleep(config.getDayTime() * 1000);
+                }catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in day sleep. shouldn't happen!" , LogLevels.ERROR , getClass().getName());
+                }
+                stopMsgReceiver();
+                stopMsgSender();
+                System.out.println("Day time ended.going for vote...");
+                try {
+                    Thread.sleep(2000);
+                }catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in end of day." , LogLevels.WARN , getClass().getName());
+                }
+            }else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_VOTE) // the incoming message for this must be in special format:
+                // player1Name,player2Name,player3Name,....
+            {
+                System.out.print("\033[0;31m");
+                System.out.print("Attention!");
+                System.out.print("\033[0m");
+                System.out.println(" Enter your vote in the following format:(voting to yourself will be ignored!)");
+                System.out.print("\033[0;31m");
+                System.out.println("vote PlayerName");
+                System.out.println();
+                System.out.print("\033[0m");
+                System.out.print("You have ");
+                System.out.print("\033[0;31m");
+                System.out.print(String.valueOf(config.getVotingTime()) + "s");
+                System.out.print("\033[0m");
+                System.out.println(" for voting...");
+                System.out.println();
+
+                String[] split = msg.getContent().trim().split(",");
+                for (int i = 1 ; i <= split.length ; i++)
+                {
+                    System.out.println(i + ") " + split[i-1]);
+                }
+                startMsgSender();
+                startMsgReceiver();
+                try {
+                    Thread.sleep(config.getVotingTime() * 1000);
+                }catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in voting time sleep." , LogLevels.WARN , getClass().getName());
+                }
+                stopMsgSender();
+                stopMsgReceiver();
+                System.out.println("Voting time ended. The one who goes out is ...");
+                msg = getMsg(); // result of voting
+                try {
+                    Thread.sleep(1500);
+                }catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in voting result sleep." , LogLevels.WARN , getClass().getName());
+                }
+                System.out.print("\033[0;31m");
+                System.out.println(msg.getContent());
+                System.out.print("\033[0m");
+                System.out.println();
+                System.out.println("Going for another night...");
+                try {
+                    Thread.sleep(1500);
+                }
+                catch (InterruptedException e)
+                {
+                    Logger.log("interrupted in end of voting." , LogLevels.WARN , getClass().getName());
+                }
+            }else if (msg.getMsgType() == MessageTypes.END_OF_GAME)
+            {
+                System.out.println(msg.getContent()); // special content should be made in server
+
+                System.exit(0);
             }
-
-
-
-
         }
     }
-
-
-
-
 
     /**
      * to access name
@@ -170,7 +262,6 @@ public class Player implements Serializable {
             msg.setTarget(target);
             outObj.writeObject(msg);
         }catch (IOException e)
-
         {
             Logger.log( this.getName()+ " can't send message with type " + type + " to server." ,
                     LogLevels.ERROR , this.getClass().getName());
@@ -195,27 +286,14 @@ public class Player implements Serializable {
         }
         return null;
     }
-//
-//    public boolean vote(String plyName){ // must be overridden for some characters
-//        ArrayList<Player> alives = (ArrayList<Player>) SharedData.getSharedData().getAlives();
-//        for (Player player:alives)
-//        {
-//            if (player.getName().equalsIgnoreCase(plyName))
-//            {
-//                myVote = player;
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
 
-    /**
-     * to know if is ready to join the game
-     * @return if player is ready , returns true , else false
-     */
-    public boolean isReady() {
-        return isReady;
-    }
+//    /**
+//     * to know if is ready to join the game
+//     * @return if player is ready , returns true , else false
+//     */
+//    public boolean isReady() {
+//        return isReady;
+//    }
 
     /**
      * to know if is allowed to chat

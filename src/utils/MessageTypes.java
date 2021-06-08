@@ -8,9 +8,9 @@ public enum MessageTypes implements Serializable {
     PLAYER_IS_READY,
     ACTIONS_EXIT,
     FAKE_MESSAGE,
+    END_OF_GAME,
 
-
-    GOD_TO_CLIENT_STATE_DESCRIPTION,
+    COMMAND_REFUSED,
     NORMAL_CHAT,
 
     ACTIONS_GOD_SET_ROLE,

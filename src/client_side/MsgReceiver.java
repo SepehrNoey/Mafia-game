@@ -15,8 +15,8 @@ import utils.logClasses.Logger;
  * @version 1.0
  */
 public class MsgReceiver implements Runnable{
-    private Player player;
-    private Thread thread;
+    private final Player player;
+    private final Thread thread;
     /**
      * constructor
      * @param player the player which wants to get message from server
@@ -46,13 +46,16 @@ public class MsgReceiver implements Runnable{
                 if(msg != null)
                 {
                     if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_START) {
-                        Logger.log(player.getName() + " got start message.", LogLevels.INFO , getClass().getName());
+                        Logger.log(player.getName() + " got start message - lock freed.", LogLevels.INFO , getClass().getName());
                         fakeLock = msg; // now , the lock(startMsg of player) is free , and the JoinServer can continue
                     }
-                    if(msg.getChatroomType() == ChatroomType.MAFIA_CHATROOM)
-                        System.out.print("\033[0;31m");
-                    System.out.println(msg.getSender() + ": "  + msg.getContent());
-                    System.out.print("\033[0m");
+                    else
+                    {
+                        if (msg.getChatroomType() == ChatroomType.MAFIA_CHATROOM) // red for mafia chatroom
+                            System.out.print("\033[0;31m");
+                        System.out.println(msg.getSender() + ": "  + msg.getContent());
+                        System.out.print("\033[0m");
+                    }
                 }
             }
         }
