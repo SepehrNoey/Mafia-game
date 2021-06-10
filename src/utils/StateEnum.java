@@ -1,7 +1,8 @@
 package utils;
 
-public enum StateEnum {
-    BEFORE_START,
+import java.io.Serializable;
+
+public enum StateEnum implements Serializable {
     FIRST_NIGHT,
     DAY,
     NIGHT,

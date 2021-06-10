@@ -1,6 +1,5 @@
 package server_side;
 
-import utils.ChatroomType;
 import utils.Config;
 import utils.Message;
 import utils.logClasses.LogLevels;
@@ -16,8 +15,8 @@ public class Server {
     private final String name;
     private ServerSocket welcomeSocket;
     private List<Player_ServerSide> players;
-    private ChatRoom publicChatroom;
-    private ChatRoom mafiaChatroom;
+    private ArrayList<Message> publicChats;
+    private ArrayList<Message> mafiaChats;
     private List<Player_ServerSide> gameWatchers; // dead players , which want to see the rest of game
     private List<Player_ServerSide> observers;
     private Config gameConfig;
@@ -37,12 +36,42 @@ public class Server {
         Logger.log("server created." , LogLevels.INFO , getClass().getName());
     }
 
+    public void commandSeparator(){
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * to access mafia chatroom
      * @return mafia chatroom
      */
-    public ChatRoom getMafiaChatroom() {
-        return mafiaChatroom;
+    public ArrayList<Message> getMafiaChats() {
+        return mafiaChats;
     }
 
 //
@@ -60,24 +89,6 @@ public class Server {
 //        }
 //        Logger.log("end of trying to send msg to players in list" , LogLevels.INFO , getClass().getName());
 //    }
-
-    /**
-     * this method must be used before using chatroom methods
-     * @param type is the type of chatroom
-     */
-    public void makeChatRoom(ChatroomType type , ArrayList<Player_ServerSide> members){
-        if (type == ChatroomType.MAFIA_CHATROOM && mafiaChatroom == null)
-        {
-            mafiaChatroom = new ChatRoom(ChatroomType.MAFIA_CHATROOM , this , members);
-        }
-        else if (type == ChatroomType.PUBLIC_CHATROOM && publicChatroom == null)
-        {
-            publicChatroom = new ChatRoom(ChatroomType.PUBLIC_CHATROOM , this , members);
-        }
-        else {
-            Logger.log("trying to make invalid chatroom" , LogLevels.WARN , getClass().getName());
-        }
-    }
 
     /**
      * getter

@@ -5,19 +5,20 @@ import server_side.clientHandler.MsgSender;
 import utils.Message;
 import utils.Role_Group;
 
+import java.io.Serializable;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
-public class Player_ServerSide {
+public class Player_ServerSide implements Serializable {
     private String name;
     private Role_Group role;
     private Role_Group group;
     private boolean isAlive;
-    private MsgSender msgSender;
-    private MsgReceiver msgReceiver;
-    private ArrayBlockingQueue<Message> sharedInbox;
-    private LinkedTransferQueue<Message> readyMsgs;
+    private transient MsgSender msgSender;
+    private transient MsgReceiver msgReceiver;
+    private transient ArrayBlockingQueue<Message> sharedInbox;
+    private transient LinkedTransferQueue<Message> readyMsgs;
 
     /**
      * constructor - role and group should be set later

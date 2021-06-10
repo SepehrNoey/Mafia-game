@@ -66,8 +66,14 @@ public class GameInit {
         {
             try {
                 System.out.println("Default game config is listed below , if you want to change it , enter 0 , else 1 :");
-                System.out.println("Player numbers : 10\nDay time: 5 min\nEach role time at night: 15s" +
-                        "\nVoting time: 30s\nMafia number: 3\nCitizen number: 7\n");
+                System.out.println("""
+                        Player numbers : 10
+                        Day time: 5 min
+                        Each role time at night: 15s
+                        Voting time: 30s
+                        Mafia number: 3
+                        Citizen number: 7
+                        """);
                 int choice = scanner.nextInt();
                 if (choice == 1){
                     config = new Config();
