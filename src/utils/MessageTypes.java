@@ -4,12 +4,13 @@ import java.io.Serializable;
 
 public enum MessageTypes implements Serializable {
     JOIN_REQUEST,
-    PLAYER_JOINED_SUCCESSFULLY,
+    ALL_PLAYERS_JOINED,
     PLAYER_IS_READY,
     ACTIONS_EXIT,
     FAKE_MESSAGE,
     END_OF_GAME,
 
+    INFO,
     COMMAND_REFUSED,
     NORMAL_CHAT,
 

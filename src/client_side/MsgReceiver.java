@@ -49,6 +49,12 @@ public class MsgReceiver implements Runnable{
                         Logger.log(player.getName() + " got start message - lock freed.", LogLevels.INFO , getClass().getName());
                         fakeLock = msg; // now , the lock(startMsg of player) is free , and the JoinServer can continue
                     }
+                    else if (msg.getMsgType() == MessageTypes.ALL_PLAYERS_JOINED)
+                    {
+                        System.out.println("\033[0;32m");
+                        System.out.println("If you are ready to join , enter 'ready'");
+                        System.out.print("\033[0m");
+                    }
                     else
                     {
                         if (msg.getChatroomType() == ChatroomType.MAFIA_CHATROOM) // red for mafia chatroom

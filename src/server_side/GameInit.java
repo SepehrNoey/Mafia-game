@@ -1,7 +1,9 @@
 package server_side;
 
+import utils.ChatroomType;
 import utils.Config;
 import utils.Message;
+import utils.MessageTypes;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
@@ -10,10 +12,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.Format;
-import java.util.Formatter;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
 
 /**
  * belongs to 'mafia game'
@@ -54,6 +57,10 @@ public class GameInit {
                 System.out.println("Invalid input. Enter a positive integer as port: ");
             }
         }
+        // created successfully
+        ArrayBlockingQueue<Message> sharedInbox = server.getSharedInbox();
+        LinkedTransferQueue<Message> readyMsgs = new LinkedTransferQueue<>();
+
         Config config = null;
         while (true)
         {
@@ -65,6 +72,7 @@ public class GameInit {
                 if (choice == 1){
                     config = new Config();
                     Logger.log("Game config loaded." , LogLevels.INFO , GameInit.class.getName());
+                    break;
                 }
                 else if(choice == 0) {
                     System.out.println("Choose from existing choices: ");
@@ -80,6 +88,7 @@ public class GameInit {
                             Integer.parseInt(split[2]) , playersMode == 1 ? 3 : playersMode == 2 ? 2 : 1 ,
                             playersMode == 1 ? 7 : playersMode == 2 ? 5 : 4);
                     Logger.log("Game config loaded." , LogLevels.INFO , GameInit.class.getName());
+                    break;
                 }
                 else {
                     throw new InputMismatchException();
@@ -89,30 +98,83 @@ public class GameInit {
                 System.out.println("Invalid input! Try again.");
             }
         }
-
-
-
+        server.setGameConfig(config);
         ServerSocket welcome = server.getWelcomeSocket();
         ObjectOutputStream outObj;
         ObjectInputStream inObj;
-        while (true)
+        Message msg;
+        int joinedPlyNum = 0;
+        ArrayList<Player_ServerSide> players = new ArrayList<>();
+
+        while (joinedPlyNum < config.getPlayerNumbers())
         {
             Socket connection = null;
             try {
                 connection = welcome.accept();
                 outObj = new ObjectOutputStream(connection.getOutputStream());
                 inObj = new ObjectInputStream(connection.getInputStream());
-                outObj.writeObject(new Message(server.getName() + ","));
+                String emptyOrFull = server.currentPlyNum() >= config.getPlayerNumbers() ? "full" : "empty";
+                outObj.writeObject(new Message(server.getName(),server.getName() + "," + emptyOrFull + ",players: "
+                        + server.currentPlyNum() + "/" + config.getPlayerNumbers()
+                        , ChatroomType.TO_CLIENT , MessageTypes.INFO));
+                msg = (Message) inObj.readObject();
+                if (msg.getMsgType() == MessageTypes.ACTIONS_EXIT){
+                    continue; // skipping this time
+                }
+                else if (msg.getMsgType() == MessageTypes.JOIN_REQUEST){
+                    boolean res = server.isNameExist(msg.getContent());
+                    if (!res) // player accepted
+                    {
+                        joinedPlyNum++;
+                        Player_ServerSide player = new Player_ServerSide(msg.getContent() , connection , sharedInbox);
+                        player.setReadyMsgs(readyMsgs);
+                        server.addPlayer(player);
+                        player.getMsgReceiver().getThread().start();
+                        outObj.writeObject(new Message(server.getName(), "allow" , ChatroomType.TO_CLIENT , MessageTypes.INFO));
+                        outObj.writeObject(config);
+                        players.add(player);
+                        System.out.println(player.getName() + " joined.");
+                        if (!(joinedPlyNum == config.getPlayerNumbers()))
+                            System.out.println("Waiting for other players...");
+                    }
+                    else
+                    {
+                        outObj.writeObject(new Message(server.getName() , "deny" , ChatroomType.TO_CLIENT , MessageTypes.INFO));
+                    }
+                }
 
             }
             catch (IOException e)
             {
                 Logger.log("ioException in accept method. or creating streams" , LogLevels.ERROR , GameInit.class.getName());
             }
+            catch (ClassNotFoundException e)
+            {
+                Logger.log("can't find class Message." , LogLevels.ERROR , GameInit.class.getName());
+            }
         }
 
+        System.out.println("All players joined.");
+        System.out.println("Waiting for all players to send 'ready'...");
+        for (Player_ServerSide player:players)
+        {
+            player.getMsgSender().sendMsg(new Message(server.getName(),"All players joined." , ChatroomType.TO_CLIENT , MessageTypes.ALL_PLAYERS_JOINED));
+        }
 
-
+        int readyGotNum = 0;
+        while (readyGotNum < 10)
+        {
+            try {
+                Message rdMsg = readyMsgs.take();
+                readyGotNum++;
+            }catch (InterruptedException e)
+            {
+                Logger.log("interrupted in ready msg getting." , LogLevels.WARN , GameInit.class.getName());
+                System.out.println("interrupted in ready msg getting.");
+            }
+        }
+        System.out.println("all players are ready now . going to start the game.");
+        Logger.log("all players are ready now . going to start the game." , LogLevels.INFO , GameInit.class.getName());
 
 
     }

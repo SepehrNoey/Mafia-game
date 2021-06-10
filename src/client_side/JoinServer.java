@@ -60,7 +60,8 @@ public class JoinServer {
                             scanner.nextLine();
                             name = scanner.nextLine().trim();
                             if (name.equalsIgnoreCase("exit")) {
-                                System.out.println("Good Bye!");
+                                System.out.println("Good Bye!"); // maybe need to notify that the player exited!
+                                out.writeObject(new Message("JoinServer" , "player exited." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_EXIT));
                                 System.exit(0);
                             }
                             out.writeObject(new Message("JoinServer", name, ChatroomType.TO_GOD, MessageTypes.JOIN_REQUEST));
@@ -75,8 +76,7 @@ public class JoinServer {
                                     player.setConfig(config);
                                     player.startMsgSender();
                                     player.startMsgReceiver();
-                                    System.out.println("Waiting for other players to join...");
-                                    System.out.println("If you are ready to join , enter 'ready'");
+                                    System.out.println("Waiting for other players to join...\nYou can chat with others until all players join:");
                                     try {
                                         Thread.sleep(1000); // is used to make sure that the start message is locked in msgReceiver
                                     }catch (InterruptedException e)
@@ -121,7 +121,8 @@ public class JoinServer {
             }
             catch (IOException e){
                 Logger.log(data[0] + " can't connect to server" , LogLevels.ERROR , JoinServer.class.getName());
-                System.out.println("Cannot connect to server. Try again.");
+                System.out.println("Sorry! No seat for new players!. Exiting...");
+                System.exit(0);
             }
         }
 

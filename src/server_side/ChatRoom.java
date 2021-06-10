@@ -1,6 +1,5 @@
 package server_side;
 
-import client_side.Player;
 import utils.ChatroomType;
 import utils.Message;
 import utils.MessageTypes;
@@ -16,7 +15,7 @@ import java.util.List;
  */
 public class ChatRoom {
     private ChatroomType type;
-    private List<Player> members;
+    private List<Player_ServerSide> members;
     private List<Message> inbox;
     private Server server;
 
@@ -24,7 +23,7 @@ public class ChatRoom {
      * constructor
      * @param type is the type of chatroom
      */
-    public ChatRoom(ChatroomType type ,Server server , ArrayList<Player> members){
+    public ChatRoom(ChatroomType type ,Server server , ArrayList<Player_ServerSide> members){
         this.type = type;
         this.members = members;
         this.server = server;
@@ -44,7 +43,7 @@ public class ChatRoom {
      * @param msgType is the MessageType enum
      * @param createdMsg is the created before(not a new message) message object
      */
-    public void notifyMems(List<Player> list, String msg , MessageTypes msgType, Message createdMsg){
+    public void notifyMems(List<Player_ServerSide> list, String msg , MessageTypes msgType, Message createdMsg){
         server.notifyList(list,msg ,msgType,createdMsg);
     }
 
