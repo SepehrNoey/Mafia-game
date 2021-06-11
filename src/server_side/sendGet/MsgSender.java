@@ -1,4 +1,4 @@
-package server_side.clientHandler;
+package server_side.sendGet;
 
 import utils.Message;
 import utils.logClasses.LogLevels;
@@ -6,7 +6,6 @@ import utils.logClasses.Logger;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.Socket;
 
 public class MsgSender {

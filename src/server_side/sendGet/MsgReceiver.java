@@ -1,4 +1,4 @@
-package server_side.clientHandler;
+package server_side.sendGet;
 
 import utils.Message;
 import utils.MessageTypes;
@@ -7,7 +7,6 @@ import utils.logClasses.Logger;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;

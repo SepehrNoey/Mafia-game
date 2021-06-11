@@ -1,5 +1,6 @@
-package client_side;
+package client_side.sendGet;
 
+import client_side.model.Player;
 import utils.ChatroomType;
 import utils.Message;
 import utils.MessageTypes;
@@ -36,7 +37,7 @@ public class MsgReceiver implements Runnable{
 
     @Override
     public void run() {
-        Message fakeLock = new Message("msgReceiver","fakeLock" , ChatroomType.TO_GOD ,MessageTypes.FAKE_MESSAGE);
+        Message fakeLock = new Message("msgReceiver","fakeLock" , ChatroomType.TO_GOD ,MessageTypes.FAKE_MESSAGE , null);
         player.setStartMsg(fakeLock);
 
         while (!thread.isInterrupted())
@@ -51,9 +52,24 @@ public class MsgReceiver implements Runnable{
                     }
                     else if (msg.getMsgType() == MessageTypes.ALL_PLAYERS_JOINED)
                     {
-                        System.out.println("\033[0;32m");
-                        System.out.println("If you are ready to join , enter 'ready'");
+                        System.out.print("\033[0;32m");
+                        System.out.println("All players joined.");
+                        System.out.println("If you are ready for game, enter 'ready'");
                         System.out.print("\033[0m");
+                    }
+                    else if (msg.getMsgType() == MessageTypes.COMMAND_ACCEPTED)
+                    {
+                        System.out.print("\033[0;32m");
+                        System.out.println("Done.");
+                        System.out.print("\033[0m");
+                        System.out.println(msg.getContent());
+
+                    }
+                    else if (msg.getMsgType() == MessageTypes.COMMAND_REFUSED){
+                        System.out.print("\033[0;31m");
+                        System.out.println("Rejected.");
+                        System.out.print("\033[0m");
+                        System.out.println(msg.getContent());
                     }
                     else
                     {

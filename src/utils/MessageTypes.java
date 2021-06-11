@@ -12,6 +12,7 @@ public enum MessageTypes implements Serializable {
 
     INFO,
     COMMAND_REFUSED,
+    COMMAND_ACCEPTED,
     NORMAL_CHAT,
 
     ACTIONS_GOD_SET_ROLE,

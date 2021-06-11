@@ -1,5 +1,6 @@
-package client_side;
+package client_side.sendGet;
 
+import client_side.model.Player;
 import utils.ChatroomType;
 import utils.MessageTypes;
 import utils.Role_Group;

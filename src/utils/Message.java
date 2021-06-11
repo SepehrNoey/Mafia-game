@@ -22,11 +22,12 @@ public class Message implements Serializable {
      * @param chatroomType where is it going(destination)
      * @param msgType what type it is ? (normal chat , an order to server , ...)
      */
-    public Message(String sender , String content , ChatroomType chatroomType , MessageTypes msgType){
+    public Message(String sender , String content , ChatroomType chatroomType , MessageTypes msgType , String target){
         this.sender = sender;
         this.content = content;
         this.chatroomType = chatroomType;
         this.msgType = msgType;
+        this.target = target;
     }
 
     /**
@@ -67,13 +68,5 @@ public class Message implements Serializable {
      */
     public String getTarget() {
         return target;
-    }
-
-    /**
-     * to set target name
-     * @param target is the name of target
-     */
-    public void setTarget(String target) {
-        this.target = target;
     }
 }

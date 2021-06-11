@@ -1,12 +1,13 @@
-package client_side;
+package client_side.model;
 
+import client_side.sendGet.MsgReceiver;
+import client_side.sendGet.MsgSender;
 import utils.*;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
 
 /**
  * belongs to 'mafia game'
@@ -65,7 +66,6 @@ public class Player implements Serializable {
      */
     public void playLoop(){
         Message msg = null;
-        System.out.println("All players are joined and ready.");
         while (true)
         {
             msg = getMsg();
@@ -264,9 +264,7 @@ public class Player implements Serializable {
     public void sendMsg(String content , ChatroomType type , MessageTypes msgType , String target){
 
         try{
-            Message msg = new Message(getName() , content , type , msgType);
-            msg.setTarget(target);
-            outObj.writeObject(msg);
+            outObj.writeObject(new Message(getName() , content , type , msgType , target));
         }catch (IOException e)
         {
             Logger.log( this.getName()+ " can't send message with type " + type + " to server." ,
@@ -292,14 +290,6 @@ public class Player implements Serializable {
         }
         return null;
     }
-
-//    /**
-//     * to know if is ready to join the game
-//     * @return if player is ready , returns true , else false
-//     */
-//    public boolean isReady() {
-//        return isReady;
-//    }
 
     /**
      * to know if is allowed to chat

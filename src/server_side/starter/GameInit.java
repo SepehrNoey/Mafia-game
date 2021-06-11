@@ -1,9 +1,11 @@
-package server_side;
+package server_side.starter;
 
-import utils.ChatroomType;
-import utils.Config;
-import utils.Message;
-import utils.MessageTypes;
+import server_side.manager.GameLoop;
+import server_side.manager.GameState;
+import server_side.manager.Logic;
+import server_side.model.Player_ServerSide;
+import server_side.model.Server;
+import utils.*;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
@@ -28,8 +30,8 @@ import java.util.concurrent.LinkedTransferQueue;
 public class GameInit {
     public static void main(String[] args) {
         System.out.println("Welcome to 'mafia game' in server side!");
-        System.out.println("For creating new server enter port: ");
         Scanner scanner = new Scanner(System.in);
+        System.out.println("For creating new server enter port: ");
         int port = 0;
         Server server = null;
         while (true)
@@ -122,7 +124,7 @@ public class GameInit {
                 String emptyOrFull = server.currentPlyNum() >= config.getPlayerNumbers() ? "full" : "empty";
                 outObj.writeObject(new Message(server.getName(),server.getName() + "," + emptyOrFull + ",players: "
                         + server.currentPlyNum() + "/" + config.getPlayerNumbers()
-                        , ChatroomType.TO_CLIENT , MessageTypes.INFO));
+                        , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
                 msg = (Message) inObj.readObject();
                 if (msg.getMsgType() == MessageTypes.ACTIONS_EXIT){
                     continue; // skipping this time
@@ -136,7 +138,7 @@ public class GameInit {
                         player.setReadyMsgs(readyMsgs);
                         server.addPlayer(player);
                         player.getMsgReceiver().getThread().start();
-                        outObj.writeObject(new Message(server.getName(), "allow" , ChatroomType.TO_CLIENT , MessageTypes.INFO));
+                        outObj.writeObject(new Message(server.getName(), "allow" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
                         outObj.writeObject(config);
                         players.add(player);
                         System.out.println(player.getName() + " joined.");
@@ -145,7 +147,7 @@ public class GameInit {
                     }
                     else
                     {
-                        outObj.writeObject(new Message(server.getName() , "deny" , ChatroomType.TO_CLIENT , MessageTypes.INFO));
+                        outObj.writeObject(new Message(server.getName() , "deny" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
                     }
                 }
 
@@ -164,7 +166,7 @@ public class GameInit {
         System.out.println("Waiting for all players to send 'ready'...");
         for (Player_ServerSide player:players)
         {
-            player.getMsgSender().sendMsg(new Message(server.getName(),"All players joined." , ChatroomType.TO_CLIENT , MessageTypes.ALL_PLAYERS_JOINED));
+            player.getMsgSender().sendMsg(new Message(server.getName(),"All players joined." , ChatroomType.TO_CLIENT , MessageTypes.ALL_PLAYERS_JOINED , null));
         }
 
         int readyGotNum = 0;
@@ -182,7 +184,13 @@ public class GameInit {
         System.out.println("all players are ready now . going to start the game.");
         Logger.log("all players are ready now . going to start the game." , LogLevels.INFO , GameInit.class.getName());
 
-
+        server.setRoles();
+        server.notifyList(server.getPlayers(), new Message(server.getName() , "start message to players." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_START , null));
+        System.out.println("Start message sent to players.");
+        GameState gameState = new GameState(config , server , StateEnum.FIRST_NIGHT , null); // at first , turnPlayer should be null
+        Logic logic = new Logic(server , gameState);
+        GameLoop gameLoop = new GameLoop(server,logic ,gameState);
+        gameLoop.playLoop();
     }
 
 }

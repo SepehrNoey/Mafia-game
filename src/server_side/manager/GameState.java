@@ -1,10 +1,18 @@
-package server_side;
+package server_side.manager;
 
+import server_side.model.Player_ServerSide;
+import server_side.model.Server;
 import utils.Config;
 import utils.StateEnum;
 
 import java.io.Serializable;
 
+/**
+ * this class will be used for saving data in file and also accessing to needed data in any class in server side
+ *
+ * @author Sepehr Noey
+ * @version 1.0
+ */
 public class GameState implements Serializable {
     private Config config;
     private Server server;
@@ -15,7 +23,8 @@ public class GameState implements Serializable {
         this.config = config;
         this.server = server;
         this.state = state;
-        this.turnPlayer = turnPlayer;
+        if (turnPlayer != null)
+            this.turnPlayer = turnPlayer;
     }
 
     /**
@@ -65,4 +74,13 @@ public class GameState implements Serializable {
     public void setTurnPlayer(Player_ServerSide turnPlayer) {
         this.turnPlayer = turnPlayer;
     }
+
+    /**
+     * to access the data in server
+     * @return server
+     */
+    public Server getServer() {
+        return server;
+    }
+
 }

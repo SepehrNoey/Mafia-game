@@ -1,5 +1,6 @@
-package client_side;
+package client_side.starter;
 
+import client_side.model.Player;
 import utils.ChatroomType;
 import utils.Config;
 import utils.Message;
@@ -7,7 +8,6 @@ import utils.MessageTypes;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
-import javax.swing.text.Style;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -61,10 +61,10 @@ public class JoinServer {
                             name = scanner.nextLine().trim();
                             if (name.equalsIgnoreCase("exit")) {
                                 System.out.println("Good Bye!"); // maybe need to notify that the player exited!
-                                out.writeObject(new Message("JoinServer" , "player exited." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_EXIT));
+                                out.writeObject(new Message("JoinServer" , "player exited." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_EXIT , null));
                                 System.exit(0);
                             }
-                            out.writeObject(new Message("JoinServer", name, ChatroomType.TO_GOD, MessageTypes.JOIN_REQUEST));
+                            out.writeObject(new Message("JoinServer", name, ChatroomType.TO_GOD, MessageTypes.JOIN_REQUEST , null));
                             msg = (Message) in.readObject(); // should has this content : allow(or deny)
                             if (msg.getContent().equalsIgnoreCase("allow"))
                             {

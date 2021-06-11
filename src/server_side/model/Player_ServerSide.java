@@ -1,7 +1,7 @@
-package server_side;
+package server_side.model;
 
-import server_side.clientHandler.MsgReceiver;
-import server_side.clientHandler.MsgSender;
+import server_side.sendGet.MsgReceiver;
+import server_side.sendGet.MsgSender;
 import utils.Message;
 import utils.Role_Group;
 
@@ -88,5 +88,21 @@ public class Player_ServerSide implements Serializable {
      */
     public void setReadyMsgs(LinkedTransferQueue<Message> readyMsgs) {
         this.readyMsgs = readyMsgs;
+    }
+
+    /**
+     * setter
+     * @param role in game
+     */
+    public void setRole(Role_Group role) {
+        this.role = role;
+    }
+
+    /**
+     * setter
+     * @param group mafia or citizen group
+     */
+    public void setGroup(Role_Group group) {
+        this.group = group;
     }
 }

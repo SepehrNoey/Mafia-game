@@ -1,6 +1,6 @@
 //package utils;
 //
-//import client_side.Player;
+//import client_side.model.Player;
 //
 //import java.io.Serializable;
 //import java.util.ArrayList;
