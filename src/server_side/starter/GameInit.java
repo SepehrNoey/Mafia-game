@@ -189,6 +189,7 @@ public class GameInit {
         System.out.println("Start message sent to players.");
         GameState gameState = new GameState(config , server , StateEnum.FIRST_NIGHT , null); // at first , turnPlayer should be null
         Logic logic = new Logic(server , gameState);
+        server.setLogic(logic);
         GameLoop gameLoop = new GameLoop(server,logic ,gameState);
         gameLoop.playLoop();
     }

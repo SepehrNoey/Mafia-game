@@ -17,9 +17,9 @@ public class Server {
     private final String name;
     private ServerSocket welcomeSocket;
     private List<Player_ServerSide> players;
-    private ArrayList<Message> beforeStartChats;
-    private ArrayList<Message> publicChats;
-    private ArrayList<Message> mafiaChats;
+    private List<Message> beforeStartChats;
+    private List<Message> publicChats;
+    private List<Message> mafiaChats;
     private List<Player_ServerSide> gameWatchers; // dead players , which want to see the rest of game
     private List<Player_ServerSide> observers;
     private Config gameConfig;
@@ -27,6 +27,8 @@ public class Server {
     private Map<Role_Group , Player_ServerSide> roleToPlayer;
     private MsgSeparator msgSeparator;
     private Logic logic;
+    private List<Message> events;
+    private List<Player_ServerSide> outOfGame;
 
     /**
      * constructor - singleton pattern
@@ -44,9 +46,10 @@ public class Server {
         publicChats = new ArrayList<>();
         mafiaChats = new ArrayList<>();
         Logger.log("server created." , LogLevels.INFO , getClass().getName());
-        this.logic = new Logic(this);
         msgSeparator = new MsgSeparator(this,logic);
         msgSeparator.getThread().start();
+        events = new ArrayList<>();
+        outOfGame = new ArrayList<>();
     }
 
     /**
@@ -62,7 +65,7 @@ public class Server {
         roles1.add(Role_Group.NORMAL_MAFIA);
         roles1.add(Role_Group.DOCTOR);
         roles1.add(Role_Group.DETECTIVE);
-        roles1.add(Role_Group.SNIPER);
+        roles1.add(Role_Group.SNIPER); // just one bullet
         roles1.add(Role_Group.CITIZEN);
         roles1.add(Role_Group.MAYOR);
         roles1.add(Role_Group.PSYCHOLOGIST);
@@ -73,7 +76,7 @@ public class Server {
         roles2.add(Role_Group.GODFATHER);
         roles2.add(Role_Group.DOCTOR_LECTER);
         roles2.add(Role_Group.DETECTIVE);
-        roles2.add(Role_Group.SNIPER);
+        roles2.add(Role_Group.SNIPER); // just one bullet
         roles2.add(Role_Group.CITIZEN);
         roles2.add(Role_Group.DOCTOR);
         roles2.add(Role_Group.DIE_HARD);
@@ -84,7 +87,7 @@ public class Server {
         roles3.add(Role_Group.CITIZEN);
         roles3.add(Role_Group.DOCTOR);
         roles3.add(Role_Group.DETECTIVE);
-        roles3.add(Role_Group.SNIPER);
+        roles3.add(Role_Group.MAYOR);
 
         int num = gameConfig.getPlayerNumbers();
         ArrayList<Role_Group> roles = num == 10 ? roles1 : num == 7 ? roles2 : roles3;
@@ -219,7 +222,7 @@ public class Server {
      * getter
      * @return beforeStart chats
      */
-    public ArrayList<Message> getBeforeStartChats() {
+    public List<Message> getBeforeStartChats() {
         return beforeStartChats;
     }
 
@@ -227,7 +230,7 @@ public class Server {
      * getter
      * @return mafia chats
      */
-    public ArrayList<Message> getMafiaChats() {
+    public List<Message> getMafiaChats() {
         return mafiaChats;
     }
 
@@ -235,7 +238,7 @@ public class Server {
      * getter
      * @return public chats
      */
-    public ArrayList<Message> getPublicChats() {
+    public List<Message> getPublicChats() {
         return publicChats;
     }
 
@@ -251,5 +254,37 @@ public class Server {
                 return player;
         }
         return null;
+    }
+
+    /**
+     * to set logic
+     * @param logic created logic to add
+     */
+    public void setLogic(Logic logic) {
+        this.logic = logic;
+    }
+
+    /**
+     * to add a valid event(validity should be checked before this)
+     * @param msg the new event
+     */
+    public void addEvent(Message msg){
+        events.add(msg);
+    }
+
+    /**
+     * to handle events after each state in gameLoop
+     *      - the entered events are valid , no need to check
+     */
+    public void handleEvents(){
+
+    }
+
+    /**
+     * to access players which are out of game
+     * @return outOfGame players
+     */
+    public List<Player_ServerSide> getOutOfGame() {
+        return outOfGame;
     }
 }
