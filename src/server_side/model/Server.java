@@ -21,7 +21,6 @@ public class Server {
     private List<Message> publicChats;
     private List<Message> mafiaChats;
     private List<Player_ServerSide> gameWatchers; // dead players , which want to see the rest of game
-    private List<Player_ServerSide> observers;
     private Config gameConfig;
     private ArrayBlockingQueue<Message> sharedInbox;
     private Map<Role_Group , Player_ServerSide> roleToPlayer;
@@ -39,7 +38,6 @@ public class Server {
         welcomeSocket = new ServerSocket(port);
         players = new ArrayList<>();
         gameWatchers = new ArrayList<>();
-        observers = new ArrayList<>();
         sharedInbox = new ArrayBlockingQueue<>(200);
         roleToPlayer = new HashMap<>();
         beforeStartChats = new ArrayList<>();
@@ -286,5 +284,13 @@ public class Server {
      */
     public List<Player_ServerSide> getOutOfGame() {
         return outOfGame;
+    }
+
+    /**
+     * getter
+     * @return gameWatchers
+     */
+    public List<Player_ServerSide> getGameWatchers() {
+        return gameWatchers;
     }
 }

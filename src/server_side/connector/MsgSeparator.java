@@ -3,9 +3,7 @@ package server_side.connector;
 import server_side.manager.Logic;
 import server_side.model.Player_ServerSide;
 import server_side.model.Server;
-import utils.ChatroomType;
-import utils.Message;
-import utils.MessageTypes;
+import utils.*;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
@@ -41,7 +39,6 @@ public class MsgSeparator implements Runnable {
         while (!Thread.currentThread().isInterrupted()){
             try {
                 msg = sharedInbox.take();
-                Player_ServerSide toAct = server.getPlayerByName(msg.getTarget());
                 Player_ServerSide actor = server.getPlayerByName(msg.getSender());
                 boolean state = false;
                 if (msg.getMsgType() == MessageTypes.ACTIONS_GODFATHER_ORDERED_KILL || msg.getMsgType() == MessageTypes.ACTIONS_SNIPER_ORDERED_KILL)
@@ -108,8 +105,58 @@ public class MsgSeparator implements Runnable {
                         System.out.println(msg.getSender() + " tries to silence himself. Refused");
                     }
                 }
+                else if (msg.getMsgType() == MessageTypes.ACTIONS_PLAYER_VOTED) // just in voting time
+                {
+                    String[] str = logic.vote(msg).split(",");
+                    if (str[0].equals("accepted"))
+                    {
+                        server.addEvent(msg);
+                        actor.getMsgSender().sendMsg(new Message(server.getName(), str[1] , ChatroomType.TO_CLIENT , MessageTypes.COMMAND_ACCEPTED , null));
+                        server.notifyList(server.getPlayers() , new Message(msg.getSender(), "I voted " + msg.getTarget() + "." , ChatroomType.PUBLIC_CHATROOM , MessageTypes.ACTIONS_PLAYER_VOTED , null));
+                        server.notifyList(server.getGameWatchers() , new Message(msg.getSender(), "I voted " + msg.getTarget() + "." , ChatroomType.PUBLIC_CHATROOM , MessageTypes.ACTIONS_PLAYER_VOTED , null));
+                        System.out.println("Sent : " + actor.getName() + " voted " + msg.getTarget() + " to all players and watchers.");
+                        Logger.log("Sent : " + actor.getName() + " voted " + msg.getTarget() + " to all players and watchers." , LogLevels.INFO , getClass().getName());
+                    }
+                    else {
+                        actor.getMsgSender().sendMsg(new Message(server.getName() , str[1] , ChatroomType.TO_CLIENT , MessageTypes.COMMAND_REFUSED , null));
+                        System.out.println("Vote of " + msg.getSender() + " refused.because of : " + str[1]);
+                        Logger.log("Vote of " + msg.getSender() + " refused.because of : " + str[1] , LogLevels.INFO , getClass().getName());
+                    }
+                }
                 else { // normal chat
-                    
+                    if (actor.getRole() == null){  // a trick to know if the game is started or not ( role == null means the game hasn't started yet)
+                        server.getBeforeStartChats().add(msg);
+                        server.notifyList(server.getPlayers() , msg);
+                        Logger.log("Sent: '" + msg.getContent() + "' to all players - before start chats" , LogLevels.INFO , getClass().getName());
+                        System.out.println("Sent: '" + msg.getContent() + "' to all players - before start chats");
+                    }
+                    else if((logic.getGameState().getState() == StateEnum.FIRST_NIGHT && actor.getGroup() == Role_Group.MAFIA_GROUP) || (logic.getGameState().getState() == StateEnum.NIGHT && actor.getGroup() == Role_Group.MAFIA_GROUP))
+                    {
+                        msg.setChatroomType(ChatroomType.MAFIA_CHATROOM);
+                        server.getMafiaChats().add(msg);
+                        server.notifyList(server.getGameWatchers() , msg); // game watchers
+                        System.out.println("Sent: '" + msg.getContent() + "' to game watchers.");
+                        Logger.log("Sent: '" + msg.getContent() + "' to game watchers." , LogLevels.INFO , getClass().getName());
+                        for (Player_ServerSide player:server.getPlayers())
+                        {
+                            if (player.getGroup() == Role_Group.MAFIA_GROUP) {
+                                server.notifyMember(player, msg);
+                                Logger.log("Sent: '" + msg.getContent() + "' to " + player.getName() , LogLevels.INFO , getClass().getName());
+                                System.out.println("Sent: '" + msg.getContent() + "' to " + player.getName());
+                            }
+                        }
+                    }
+                    else if (logic.getGameState().getState() == StateEnum.DAY)
+                    {
+                        msg.setChatroomType(ChatroomType.PUBLIC_CHATROOM);
+                        server.getPublicChats().add(msg);
+                        server.notifyList(server.getPlayers() , msg);
+                        server.notifyList(server.getGameWatchers() , msg);
+                        System.out.println("Sent: '" + msg.getContent() + "' to all players.");
+                        Logger.log("Sent: '" + msg.getContent() + "' to all players." , LogLevels.INFO , getClass().getName());
+                        System.out.println("Sent: '" + msg.getContent() + "' to game watchers.");
+                        Logger.log("Sent: '" + msg.getContent() + "' to game watchers." , LogLevels.INFO , getClass().getName());
+                    }
                 }
 
             }catch (InterruptedException e)

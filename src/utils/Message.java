@@ -69,4 +69,12 @@ public class Message implements Serializable {
     public String getTarget() {
         return target;
     }
+
+    /**
+     * setter - used in msgSeparator
+     * @param chatroomType the new chatroomType
+     */
+    public void setChatroomType(ChatroomType chatroomType) {
+        this.chatroomType = chatroomType;
+    }
 }

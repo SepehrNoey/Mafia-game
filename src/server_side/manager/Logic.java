@@ -5,6 +5,7 @@ import server_side.model.Server;
 import utils.Message;
 import utils.MessageTypes;
 import utils.Role_Group;
+import utils.StateEnum;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -135,6 +136,22 @@ public class Logic implements Serializable {
     }
 
     /**
+     * to vote
+     * @param msg entered by player
+     * @return a result string in this format : accepted(or refused), and data about
+     */
+    public String vote(Message msg){
+        boolean isFound = isTargetFound(msg);
+        if (!isFound)
+            return "refused,Player not found!";
+        if (!(gameState.getState() == StateEnum.VOTING_TIME))
+            return "refused,Not allowed to vote now!";
+        if (msg.getSender().equals(msg.getTarget()))
+            return "refused,You can't vote to yourself!";
+        return "accepted,Your vote recorded.";
+    }
+
+    /**
      * to check if the game is finished or not
      * @return true if finished , false if not
      */
@@ -166,5 +183,13 @@ public class Logic implements Serializable {
             }
         }
         return false;
+    }
+
+    /**
+     * getter
+     * @return current game state
+     */
+    public GameState getGameState() {
+        return gameState;
     }
 }

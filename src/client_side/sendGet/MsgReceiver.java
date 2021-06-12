@@ -71,6 +71,11 @@ public class MsgReceiver implements Runnable{
                         System.out.print("\033[0m");
                         System.out.println(msg.getContent());
                     }
+                    else if (msg.getMsgType() == MessageTypes.ACTIONS_PLAYER_VOTED){
+                        System.out.print("\033[0;33m");
+                        System.out.println(msg.getSender() + ": " + msg.getContent());
+                        System.out.print("\033[0m");
+                    }
                     else
                     {
                         if (msg.getChatroomType() == ChatroomType.MAFIA_CHATROOM) // red for mafia chatroom
