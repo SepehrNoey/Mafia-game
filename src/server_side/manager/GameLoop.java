@@ -3,6 +3,8 @@ package server_side.manager;
 import server_side.model.Player_ServerSide;
 import server_side.model.Server;
 import utils.*;
+import utils.logClasses.LogLevels;
+import utils.logClasses.Logger;
 
 import java.util.Map;
 
@@ -41,6 +43,8 @@ public class GameLoop {
 
 
     public void night(){
+        // msgSeparator is working alongside this method
+        int time = gameState.getConfig().getEachRoleNightActingTime() * 1000;
         Map<Role_Group , Player_ServerSide> roleToPlayer = server.getRoleToPlayer();
         if (roleToPlayer.containsKey(Role_Group.NORMAL_MAFIA))
             server.notifyMember(roleToPlayer.get(Role_Group.NORMAL_MAFIA) , new Message(server.getName(), "order to do night act." ,ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT  , null));
@@ -48,9 +52,16 @@ public class GameLoop {
             server.notifyMember(roleToPlayer.get(Role_Group.DOCTOR_LECTER) , new Message(server.getName(),"order to do night act." ,ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null ));
         if (roleToPlayer.containsKey(Role_Group.GODFATHER))
             server.notifyMember(roleToPlayer.get(Role_Group.GODFATHER) ,new Message(server.getName(),"order to do night act." ,ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT  , null));
+        System.out.println("Waiting for mafias to do their act at night...");
+        sleep(time , "interrupted while sleeping - in night method - after mafia acting.");
+
+        if (roleToPlayer.containsKey(Role_Group.DOCTOR_LECTER))
+            server.notifyMember(roleToPlayer.get(Role_Group.DOCTOR_LECTER) , new Message(server.getName() , "order to lecter to save someone." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
+        System.out.println("Waiting for lecter ...");
+        sleep(time , "interrupted while sleeping - in night method - after lecter acting.");
 
 
-        // now using msgSeparator
+
 
 
 
@@ -62,6 +73,20 @@ public class GameLoop {
 
     public void voting(){
 
+    }
+
+    /**
+     * sleep method
+     * @param time to sleep
+     * @param msg error details
+     */
+    private void sleep(int time , String msg){
+        try {
+            Thread.sleep(time);
+        }catch (InterruptedException e)
+        {
+            Logger.log(msg, LogLevels.ERROR , getClass().getName());
+        }
     }
 
 }

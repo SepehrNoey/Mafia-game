@@ -30,8 +30,9 @@ public class Server {
     private List<Player_ServerSide> outOfGame;
 
     /**
-     * constructor - singleton pattern
+     * constructor
      *
+     * @param port is the port of server
      */
     public Server(int port)throws IOException{
         this.name = "God_" + port;
@@ -45,7 +46,6 @@ public class Server {
         mafiaChats = new ArrayList<>();
         Logger.log("server created." , LogLevels.INFO , getClass().getName());
         msgSeparator = new MsgSeparator(this,logic);
-        msgSeparator.getThread().start();
         events = new ArrayList<>();
         outOfGame = new ArrayList<>();
     }
@@ -292,5 +292,13 @@ public class Server {
      */
     public List<Player_ServerSide> getGameWatchers() {
         return gameWatchers;
+    }
+
+    /**
+     * getter
+     * @return msgSeparator of this server
+     */
+    public MsgSeparator getMsgSeparator() {
+        return msgSeparator;
     }
 }

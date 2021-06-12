@@ -62,7 +62,7 @@ public class GameInit {
         // created successfully
         ArrayBlockingQueue<Message> sharedInbox = server.getSharedInbox();
         LinkedTransferQueue<Message> readyMsgs = new LinkedTransferQueue<>();
-
+        server.getMsgSeparator().getThread().start();
         Config config = null;
         while (true)
         {
