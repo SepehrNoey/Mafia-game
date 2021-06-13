@@ -2,9 +2,7 @@ package server_side.model;
 
 import server_side.connector.MsgSeparator;
 import server_side.manager.Logic;
-import utils.Config;
-import utils.Message;
-import utils.Role_Group;
+import utils.*;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
@@ -12,6 +10,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
 
 public class Server {
     private final String name;
@@ -28,6 +27,7 @@ public class Server {
     private Logic logic;
     private List<Message> events;
     private List<Player_ServerSide> outOfGame;
+    private LinkedTransferQueue<Message> cancelMsg;
 
     /**
      * constructor
@@ -243,10 +243,11 @@ public class Server {
     /**
      * to get player by name
      * @param name of player
-     * @return player
+     * @param list the list to get player from
+     * @return player if exists , null if not
      */
-    public Player_ServerSide getPlayerByName(String name){
-        for (Player_ServerSide player:players)
+    public Player_ServerSide getPlayerByName(List<Player_ServerSide> list , String name){
+        for (Player_ServerSide player:list)
         {
             if (player.getName().equals(name))
                 return player;
@@ -275,7 +276,26 @@ public class Server {
      *      - the entered events are valid , no need to check
      */
     public void handleEvents(){
-
+        String[] result = logic.handleEvents(events).split(",");
+        String[] split = new String[2];
+        notifyList(players , new Message(getName() , "Last night events: " , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+        for (String event: result)
+        {
+            split = event.split("-");
+            switch (split[0]) {
+                case "kill" -> kickPlayer(split[1] ,"Some guys killed you last night. Do you want to watch the rest of game?\n1) yes\n2) no" );
+                case "silence" -> {
+                    Player_ServerSide toSilence = getPlayerByName(players, split[1]);
+                    toSilence.setSilenced(true);
+                    toSilence.getMsgSender().sendMsg(new Message(getName(), "Psychologist silenced you for this round! You can't chat this round.", ChatroomType.TO_CLIENT, MessageTypes.SILENCE_PLAYER, null));
+                }
+                case "kick" -> kickPlayer(split[1] ,"You kicked out of game because of trying to kill citizen. Do you want to watch the rest of game?\n1) yes\n2) no");
+                case "info" -> {
+                    notifyList(players, new Message(getName(), split[1], ChatroomType.TO_CLIENT, MessageTypes.INFO, null));
+                    notifyList(gameWatchers, new Message(getName(), split[1], ChatroomType.TO_CLIENT, MessageTypes.INFO, null));
+                }
+            }
+        }
     }
 
     /**
@@ -300,5 +320,66 @@ public class Server {
      */
     public MsgSeparator getMsgSeparator() {
         return msgSeparator;
+    }
+
+    /**
+     * getter
+     * @return list of events
+     */
+    public List<Message> getEvents() {
+        return events;
+    }
+
+    /**
+     * to access transfer message
+     * @return transfer message
+     */
+    public LinkedTransferQueue<Message> getCancelMsg() {
+        return cancelMsg;
+    }
+
+    /**
+     * to kick a player and ask if he want to watch the rest or not
+     * @param details details of why he is kicked out or killed
+     */
+    public void kickPlayer(String plyName , String details){
+        Player_ServerSide toRemove = getPlayerByName(players, plyName);
+
+        // updating players
+        roleToPlayer.remove(toRemove.getRole());
+        players.remove(toRemove);
+        outOfGame.add(toRemove);
+
+        // notifying the killed or kicked ro voted out one
+        // didn't use transfer linked queue because of the time it makes to wait for server
+        toRemove.getMsgSender().sendMsg(new Message(getName(), details, ChatroomType.TO_CLIENT, MessageTypes.QUESTION_TO_WATCH, null));
+    }
+
+    /**
+     * to close connections
+     */
+    public void closeAll(){
+        for (Player_ServerSide player:players)
+        {
+            try {
+                player.getConnection().close();
+
+            }catch (IOException e)
+            {
+                Logger.log(player.getName() + " can't close connection." , LogLevels.WARN , getClass().getName());
+                System.out.println(player.getName() + " can't close connection.");
+            }
+        }
+        for (Player_ServerSide player:outOfGame)
+        {
+            try {
+                player.getConnection().close();
+
+            }catch (IOException e)
+            {
+                Logger.log(player.getName() + " can't close connection." , LogLevels.WARN , getClass().getName());
+                System.out.println(player.getName() + " can't close connection.");
+            }
+        }
     }
 }

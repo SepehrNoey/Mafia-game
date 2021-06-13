@@ -8,6 +8,7 @@ import utils.logClasses.Logger;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.LinkedTransferQueue;
 
 /**
  * belongs to 'mafia game'
@@ -18,7 +19,6 @@ import java.net.Socket;
  */
 public class Player implements Serializable {
     private final String name;
-//    private boolean isReady;
     private boolean isAlive;
     private boolean isAllowedToChat;
     private Socket liveConnection;
@@ -30,6 +30,8 @@ public class Player implements Serializable {
     private MsgSender msgSender;
     private Message startMsg;
     private Config config;
+    private LinkedTransferQueue<Message> closeChatroomMsg;
+    private boolean isSilenced;
 
     /**
      * constructor
@@ -39,8 +41,8 @@ public class Player implements Serializable {
      * @param group mafia group or citizen group
      */
     public Player(String name , Socket socket , Role_Group role , Role_Group group){
+        closeChatroomMsg = new LinkedTransferQueue<>();
         this.name = name;
-//        isReady = false;
         isAlive = true;
         isAllowedToChat = true;
         liveConnection = socket;
@@ -50,7 +52,7 @@ public class Player implements Serializable {
             outObj = new ObjectOutputStream(liveConnection.getOutputStream());
             inObj = new ObjectInputStream(liveConnection.getInputStream());
             msgSender = new MsgSender(this); // may have bug here
-            msgReceiver = new MsgReceiver(this);
+            msgReceiver = new MsgReceiver(this , closeChatroomMsg);
             Logger.log(getName() + " added.", LogLevels.INFO ,getClass().getName());
 
         }catch (IOException e){
@@ -76,11 +78,9 @@ public class Player implements Serializable {
                 setRole(roleFromString(split[1]));
             } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_FIRST_NIGHT_GREETING) {
                 System.out.println("Now game starts.It's first night.Open your eyes...");
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    Logger.log("interrupted while sleeping.", LogLevels.ERROR, getClass().getName());
-                }
+
+                sleep(2000 , "interrupted while sleeping.");
+
                 System.out.print("Shhhh...You are ");
                 System.out.print("\033[0;31m");
                 System.out.print(getRole());
@@ -91,7 +91,7 @@ public class Player implements Serializable {
                 System.out.print("\033[0m");
 
                 if (getRole() == Role_Group.MAYOR || getRole() == Role_Group.DOCTOR || getGroup() == Role_Group.MAFIA_GROUP) {
-                    // teammates in this format: sepehr,ali,sahand, ... or it can be 'no body' which means no teammates
+                    // teammates in this format: sepehr,ali,sahand, ... or it can be 'nobody' which means no teammates
                     String[] split = getMsg().getContent().split(",");
                     if (split[0].equals("nobody")) {
                         System.out.println("You have no teammate at nights!");
@@ -105,12 +105,6 @@ public class Player implements Serializable {
                     }
                 }
                 System.out.println("Night greeting ended.going for day...");
-                try {
-                    Thread.sleep(3000);
-                }catch (InterruptedException e)
-                {
-                    Logger.log("interrupted in end of night greeting sleep." , LogLevels.WARN , getClass().getName());
-                }
 
             } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT){ // all acts are implemented by typing the act name by client
                 int roleTime = config.getEachRoleNightActingTime();
@@ -122,48 +116,39 @@ public class Player implements Serializable {
                 System.out.println(" for doing your role...");
                 startMsgSender();
                 startMsgReceiver();
-                try {
-                    Thread.sleep(roleTime * 1000);
-                }catch (InterruptedException e)
-                {
-                    Logger.log("interrupted in sleeping , in night act." , LogLevels.WARN , getClass().getName());
-                }
+
+                // here , waits until server lets to go on
+                Message closeMsg = getCloseMsg("interrupted in getting close chatroom message. shouldn't happen! - for " + getName());
+
                 System.out.println("Time ended.going for day...");
                 stopMsgSender();
                 stopMsgReceiver();
-                try {
-                    Thread.sleep(3000);
-                }catch (InterruptedException e)
-                {
-                    Logger.log("interrupted in end of night act sleep." , LogLevels.WARN , getClass().getName());
-                }
             }else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT)
             {
-
                 System.out.println("Last night summary: ");
                 System.out.print("\033[0;36m");
                 System.out.println(msg.getContent());
                 System.out.print("\033[0m");
-                startMsgSender();
-                startMsgReceiver();
-                try {
-                    Thread.sleep(config.getDayTime() * 1000);
-                }catch (InterruptedException e)
+
+                if (!isSilenced)
                 {
-                    Logger.log("interrupted in day sleep. shouldn't happen!" , LogLevels.ERROR , getClass().getName());
+                    startMsgSender();
+                    startMsgReceiver();
                 }
-                stopMsgReceiver();
-                stopMsgSender();
+
+                Message closeMsg = getCloseMsg("interrupted in getting transfer msg in day. - for " + getName());
+
+                if (!isSilenced)
+                {
+                    stopMsgReceiver();
+                    stopMsgSender();
+                }
                 System.out.println("Day time ended.going for vote...");
-                try {
-                    Thread.sleep(2000);
-                }catch (InterruptedException e)
-                {
-                    Logger.log("interrupted in end of day." , LogLevels.WARN , getClass().getName());
-                }
+
             }else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_VOTE) // the incoming message for this must be in special format:
                 // player1Name,player2Name,player3Name,....
             {
+                setSilenced(false);
                 System.out.print("\033[0;31m");
                 System.out.print("Attention!");
                 System.out.print("\033[0m");
@@ -186,34 +171,20 @@ public class Player implements Serializable {
                 }
                 startMsgSender();
                 startMsgReceiver();
-                try {
-                    Thread.sleep(config.getVotingTime() * 1000);
-                }catch (InterruptedException e)
-                {
-                    Logger.log("interrupted in voting time sleep." , LogLevels.WARN , getClass().getName());
-                }
+
+                Message closeMsg = getCloseMsg("interrupted in getting transfer msg. - voting time - for" + getName());
+
                 stopMsgSender();
                 stopMsgReceiver();
                 System.out.println("Voting time ended. The one who goes out is ...");
                 msg = getMsg(); // result of voting
-                try {
-                    Thread.sleep(1500);
-                }catch (InterruptedException e)
-                {
-                    Logger.log("interrupted in voting result sleep." , LogLevels.WARN , getClass().getName());
-                }
+
                 System.out.print("\033[0;31m");
                 System.out.println(msg.getContent());
                 System.out.print("\033[0m");
                 System.out.println();
                 System.out.println("Going for another night...");
-                try {
-                    Thread.sleep(1500);
-                }
-                catch (InterruptedException e)
-                {
-                    Logger.log("interrupted in end of voting." , LogLevels.WARN , getClass().getName());
-                }
+
             }else if (msg.getMsgType() == MessageTypes.END_OF_GAME)
             {
                 System.out.println(msg.getContent()); // special content should be made in server
@@ -415,5 +386,54 @@ public class Player implements Serializable {
      */
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    public MsgSender getMsgSender() {
+        return msgSender;
+    }
+
+    /**
+     * sleep method
+     * @param time to sleep
+     * @param msg data to save in log file
+     */
+    private void sleep(int time , String msg){
+        try {
+            Thread.sleep(time);
+        }catch (InterruptedException e) {
+            Logger.log(msg, LogLevels.WARN, getClass().getName());
+        }
+    }
+
+    /**
+     * used for synchronizing msgReceiver and playLoop
+     * @param msg the details of error to save in Logger and print
+     * @return Transferred message
+     */
+    private Message getCloseMsg(String msg){
+        try {
+            return closeChatroomMsg.take();
+        }catch (InterruptedException e)
+        {
+            System.out.println(msg);
+            Logger.log(msg,LogLevels.ERROR,getClass().getName());
+        }
+        return null;
+    }
+
+    /**
+     * to silence the player
+     * @param silenced true or false
+     */
+    public void setSilenced(boolean silenced) {
+        isSilenced = silenced;
+    }
+
+    /**
+     * getter
+     * @return true or false
+     */
+    public boolean isSilenced() {
+        return isSilenced;
     }
 }

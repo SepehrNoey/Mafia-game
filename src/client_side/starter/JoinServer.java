@@ -94,7 +94,6 @@ public class JoinServer {
                                     System.out.println("Couldn't get settings from server, exiting...");
                                     System.exit(-1);
                                 }
-                                player.playLoop();
                                 break;
                             }
                             else

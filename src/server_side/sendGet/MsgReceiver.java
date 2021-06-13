@@ -87,4 +87,18 @@ public class MsgReceiver implements Runnable {
     public void setReadyMsgs(LinkedTransferQueue<Message> readyMsgs) {
         this.readyMsgs = readyMsgs;
     }
+
+    /**
+     * starting msgReceiver
+     */
+    public void startMsgReceiver(){
+        thread.start();
+    }
+
+    /**
+     * stop msgReceiver
+     */
+    public void stopMsgReceiver(){
+        thread.interrupt();
+    }
 }

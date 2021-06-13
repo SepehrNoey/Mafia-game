@@ -2,11 +2,14 @@ package client_side.sendGet;
 
 import client_side.model.Player;
 import utils.ChatroomType;
+import utils.Message;
 import utils.MessageTypes;
 import utils.Role_Group;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
+import java.io.IOException;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 /**
@@ -18,6 +21,7 @@ import java.util.Scanner;
 public class MsgSender implements Runnable{
     private Thread thread;
     private Player player;
+    private Scanner scanner;
 
     /**
      * constructor
@@ -26,6 +30,7 @@ public class MsgSender implements Runnable{
     public MsgSender(Player player){
         this.player = player;
         thread = new Thread(this);
+        scanner = new Scanner(System.in);
     }
 
     /**
@@ -36,9 +41,43 @@ public class MsgSender implements Runnable{
         return thread;
     }
 
+    public void answerQuestion(Message msg){
+        thread.interrupt(); // may have bug here
+        Logger.log("interrupted? in answerQuestion method" , LogLevels.WARN , getClass().getName());
+        while (true) {
+            try {
+                if (!player.isSilenced())
+                {
+                    int choice = scanner.nextInt();
+                    switch (choice) {
+                        case 1 -> player.sendMsg("yes", ChatroomType.TO_GOD, msg.getMsgType() == MessageTypes.QUESTION_TO_WATCH ? MessageTypes.ANSWER_TO_WATCH : MessageTypes.ANSWER_TO_CANCEL, null);
+                        case 2 -> {
+                            player.sendMsg("no", ChatroomType.TO_GOD, msg.getMsgType() == MessageTypes.QUESTION_TO_WATCH ? MessageTypes.ANSWER_TO_WATCH : MessageTypes.ANSWER_TO_CANCEL, null);
+                            if (msg.getMsgType() == MessageTypes.QUESTION_TO_WATCH) {
+                                try {
+                                    player.getLiveConnection().close();
+                                }catch (IOException e)
+                                {
+                                    System.out.println("can't close connection");
+                                    Logger.log(player.getName() + " can't close connection." , LogLevels.ERROR , getClass().getName());
+                                }
+                                    System.out.println("Thanks for playing with us! GoodBye!");
+                                    System.exit(0);
+                            }
+                        }
+                        default -> throw new InputMismatchException();
+                    }
+                    break;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Try again.");
+            }
+        }
+        thread.start(); // may have bug here
+    }
+
     @Override
     public void run() {
-        Scanner scanner = new Scanner(System.in);
         while (!thread.isInterrupted())
         {
             scanner.nextLine();
@@ -65,10 +104,6 @@ public class MsgSender implements Runnable{
             else if (userInput.trim().equalsIgnoreCase("ready"))
             {
                 player.sendMsg(player.getName() + " is ready to start." , ChatroomType.TO_GOD ,MessageTypes.PLAYER_IS_READY , null);
-            }
-            else if (split.length >= 2 && split[0].equalsIgnoreCase("cancel") && player.getRole() == Role_Group.MAYOR)
-            {
-                player.sendMsg(player.getName() + " requests for cancel voting." , ChatroomType.TO_GOD , MessageTypes.ACTIONS_MAYOR_ORDERED_CANCEL_VOTING , null);
             }
 
             // two word commands
@@ -121,9 +156,8 @@ public class MsgSender implements Runnable{
                     Logger.log("invalid request for inquiry" , LogLevels.WARN, getClass().getName());
                 }
             }
-
             else{ // normal chat
-                player.sendMsg(userInput , ChatroomType.TO_GOD , MessageTypes.NORMAL_CHAT , null);
+                player.sendMsg(userInput.trim() , ChatroomType.TO_GOD , MessageTypes.NORMAL_CHAT , null);
             }
         }
     }

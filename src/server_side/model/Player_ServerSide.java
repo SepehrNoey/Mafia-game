@@ -14,11 +14,14 @@ public class Player_ServerSide implements Serializable {
     private String name;
     private Role_Group role;
     private Role_Group group;
+    private Socket connection;
     private boolean isAlive;
     private transient MsgSender msgSender;
     private transient MsgReceiver msgReceiver;
     private transient ArrayBlockingQueue<Message> sharedInbox;
     private transient LinkedTransferQueue<Message> readyMsgs;
+    private boolean isSilenced;
+
 
     /**
      * constructor - role and group should be set later
@@ -27,11 +30,13 @@ public class Player_ServerSide implements Serializable {
      */
     public Player_ServerSide(String name , Socket connection , ArrayBlockingQueue<Message> sharedInbox)
     {
+        this.connection = connection;
         this.sharedInbox = sharedInbox;
         this.name = name;
         isAlive = true;
         msgSender = new MsgSender(connection);
         msgReceiver = new MsgReceiver(connection , sharedInbox);
+        isSilenced = false;
     }
 
     /**
@@ -104,5 +109,21 @@ public class Player_ServerSide implements Serializable {
      */
     public void setGroup(Role_Group group) {
         this.group = group;
+    }
+
+    /**
+     * to silence player
+     * @param silenced true or false
+     */
+    public void setSilenced(boolean silenced) {
+        isSilenced = silenced;
+    }
+
+    /**
+     * getter
+     * @return socket
+     */
+    public Socket getConnection() {
+        return connection;
     }
 }

@@ -39,7 +39,7 @@ public class MsgSeparator implements Runnable {
         while (!Thread.currentThread().isInterrupted()){
             try {
                 msg = sharedInbox.take();
-                Player_ServerSide actor = server.getPlayerByName(msg.getSender());
+                Player_ServerSide actor = server.getPlayerByName(server.getPlayers(), msg.getSender());
                 boolean state = false;
                 if (msg.getMsgType() == MessageTypes.ACTIONS_GODFATHER_ORDERED_KILL || msg.getMsgType() == MessageTypes.ACTIONS_SNIPER_ORDERED_KILL)
                 {
@@ -123,6 +123,15 @@ public class MsgSeparator implements Runnable {
                         Logger.log("Vote of " + msg.getSender() + " refused.because of : " + str[1] , LogLevels.INFO , getClass().getName());
                     }
                 }
+                else if(msg.getMsgType() == MessageTypes.ANSWER_TO_WATCH)
+                {
+                    if (msg.getContent().equalsIgnoreCase("yes"))
+                        server.getGameWatchers().add(server.getPlayerByName(server.getOutOfGame(), msg.getSender()));
+                }
+                else if (msg.getMsgType() == MessageTypes.ANSWER_TO_CANCEL)
+                {
+                    server.getCancelMsg().transfer(msg);
+                }
                 else { // normal chat
                     if (actor.getRole() == null){  // a trick to know if the game is started or not ( role == null means the game hasn't started yet)
                         server.getBeforeStartChats().add(msg);
@@ -156,6 +165,10 @@ public class MsgSeparator implements Runnable {
                         Logger.log("Sent: '" + msg.getContent() + "' to all players." , LogLevels.INFO , getClass().getName());
                         System.out.println("Sent: '" + msg.getContent() + "' to game watchers.");
                         Logger.log("Sent: '" + msg.getContent() + "' to game watchers." , LogLevels.INFO , getClass().getName());
+                    }
+                    else { // may have bug here
+                        server.getPlayerByName(server.getPlayers() , msg.getSender()).getMsgSender().sendMsg(new Message(server.getName(),
+                                "You are not allowed to chat now!" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
                     }
                 }
 

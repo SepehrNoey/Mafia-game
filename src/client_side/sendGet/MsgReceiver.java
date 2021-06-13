@@ -7,6 +7,8 @@ import utils.MessageTypes;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
+import java.util.concurrent.LinkedTransferQueue;
+
 /**
  * this class is used to make it possible to get new messages while other tasks(for example sending message) are running
  *
@@ -18,12 +20,14 @@ import utils.logClasses.Logger;
 public class MsgReceiver implements Runnable{
     private final Player player;
     private final Thread thread;
+    private LinkedTransferQueue<Message> closeChatroomMsg;
     /**
      * constructor
      * @param player the player which wants to get message from server
      */
-    public MsgReceiver(Player player){
+    public MsgReceiver(Player player , LinkedTransferQueue<Message> closeChatroomMsg){
         this.player = player;
+        this.closeChatroomMsg = closeChatroomMsg;
         thread = new Thread(this);
     }
 
@@ -46,7 +50,19 @@ public class MsgReceiver implements Runnable{
                 Message msg = player.getMsg();
                 if(msg != null)
                 {
-                    if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_START) {
+                    if(msg.getMsgType() == MessageTypes.CLOSE_CHATROOM){
+                        try {
+                            closeChatroomMsg.transfer(msg);
+                            Logger.log("close chatroom message sent for " + player.getName() , LogLevels.INFO , getClass().getName());
+                        }catch (InterruptedException e){
+                            System.out.println("interrupted in transferring msg to player in msgReceiver - shouldn't happen.");
+                            Logger.log("interrupted in transferring msg to player in msgReceiver - shouldn't happen.",LogLevels.ERROR , getClass().getName());
+                        }
+                    }
+                    else if (msg.getMsgType() == MessageTypes.SILENCE_PLAYER){
+                            player.setSilenced(true);
+                    }
+                    else if(msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_START) {
                         Logger.log(player.getName() + " got start message - lock freed.", LogLevels.INFO , getClass().getName());
                         fakeLock = msg; // now , the lock(startMsg of player) is free , and the JoinServer can continue
                     }
@@ -75,6 +91,13 @@ public class MsgReceiver implements Runnable{
                         System.out.print("\033[0;33m");
                         System.out.println(msg.getSender() + ": " + msg.getContent());
                         System.out.print("\033[0m");
+                    }
+                    else if (msg.getMsgType() == MessageTypes.QUESTION_TO_WATCH || msg.getMsgType() == MessageTypes.QUESTION_TO_CANCEL)
+                    {
+                        System.out.print("\033[0;31m");
+                        System.out.println(msg.getContent());
+                        System.out.print("\033[0m");
+                        player.getMsgSender().answerQuestion(msg);  // may have bug here
                     }
                     else
                     {
