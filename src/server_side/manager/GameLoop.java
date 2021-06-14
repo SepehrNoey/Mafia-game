@@ -25,6 +25,7 @@ public class GameLoop {
     }
 
     public void playLoop() {
+        sleep(1200 , "interrupted while sleeping in first of playLoop."); // to make sure that player has entered in its playLoop
         for (Player_ServerSide player: server.getPlayers())
         {
             server.notifyMember(player , new Message(server.getName(),player.getGroup() + " " + player.getRole() , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_SET_ROLE , null));

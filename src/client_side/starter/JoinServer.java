@@ -11,9 +11,11 @@ import utils.logClasses.Logger;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 import java.util.InputMismatchException;
 import java.util.Scanner;
+import java.util.concurrent.LinkedTransferQueue;
 
 /**
  * belongs to 'mafia game'
@@ -57,7 +59,6 @@ public class JoinServer {
                         System.out.println("1) " + split[0] + "\t\t" + split[2]);// should be in this format : serverName,empty(or full),players: 7/10
                         System.out.println("Server has empty seat for new player.If you want to join enter your name , else enter 'exit'");
                         while (true) {
-                            scanner.nextLine();
                             name = scanner.nextLine().trim();
                             if (name.equalsIgnoreCase("exit")) {
                                 System.out.println("Good Bye!"); // maybe need to notify that the player exited!
@@ -69,7 +70,8 @@ public class JoinServer {
                             if (msg.getContent().equalsIgnoreCase("allow"))
                             {
                                 System.out.println("Accepted.Getting settings from server...");
-                                Player player = new Player(name , connection , null , null);
+                                LinkedTransferQueue<Message> startMsg = new LinkedTransferQueue<>();
+                                Player player = new Player(name , connection ,in ,out, null , null ,startMsg);
                                 Config config = (Config)in.readObject();
                                 if (config != null)
                                 {
@@ -83,11 +85,17 @@ public class JoinServer {
                                     {
                                         Logger.log("interrupted in sleeping for 1000 ms." , LogLevels.WARN , JoinServer.class.getName());
                                     }
-                                    synchronized (player.getStartMsg()){
-                                        player.stopMsgReceiver();
-                                        player.stopMsgSender();
-                                        player.playLoop();  // starting point for game in client side
+                                    try {
+                                        startMsg.take();
+                                    }catch (InterruptedException e)
+                                    {
+                                        System.out.println("Interrupted in startMsg taking. for " + player.getName());
+                                        Logger.log("Interrupted in startMsg taking. for " + player.getName() , LogLevels.ERROR , JoinServer.class.getName());
                                     }
+                                    player.stopMsgReceiver();
+                                    player.stopMsgSender();
+                                    player.playLoop();  // starting point for game in client side
+
                                 }
                                 else {
                                     Logger.log(player.getName() + " can't get settings from server." , LogLevels.ERROR , JoinServer.class.getName());

@@ -41,7 +41,7 @@ public class GameInit {
                 try {
                     server = new Server(port);
                     System.out.println("Successful!");
-                    System.out.println("Name : " + server.getName() + "\t\tip: 192.168.1.4\t\tport: " + server.getWelcomeSocket().getLocalPort());
+                    System.out.println("Name : " + server.getName() + "\t\tip: 192.168.1.5(for local network) - 127.0.0.1(for one device)\t\tport: " + server.getWelcomeSocket().getLocalPort() + "\n");
                     break;
                 }catch (IOException exc)
                 {
@@ -86,6 +86,7 @@ public class GameInit {
                     System.out.println("Choose from existing choices: ");
                     System.out.println("Number of Mafias and Citizens: \n1) 10 total , 3 mafia , 7 citizen\n2) 7 total , 2 mafia , 5 citizen\n3) 5 total , 1 mafia , 4 citizen");
                     int playersMode = scanner.nextInt();
+                    scanner.nextLine();
                     if (playersMode > 3 || playersMode < 1)
                         throw new InputMismatchException();
                     System.out.println("Enter 'day time(in minute)' , 'each role time at night(in seconds)' and 'voting time(in seconds)' with one space between them");
@@ -96,6 +97,7 @@ public class GameInit {
                             Integer.parseInt(split[2]) , playersMode == 1 ? 3 : playersMode == 2 ? 2 : 1 ,
                             playersMode == 1 ? 7 : playersMode == 2 ? 5 : 4);
                     Logger.log("Game config loaded." , LogLevels.INFO , GameInit.class.getName());
+                    System.out.println("Game config loaded.");
                     break;
                 }
                 else {
@@ -104,6 +106,7 @@ public class GameInit {
             }catch (InputMismatchException e)
             {
                 System.out.println("Invalid input! Try again.");
+                scanner.nextLine();
             }
         }
         server.setGameConfig(config);
@@ -118,6 +121,7 @@ public class GameInit {
         {
             Socket connection = null;
             try {
+                System.out.println("Waiting for player " + (joinedPlyNum + 1) + "-th ..." );
                 connection = welcome.accept();
                 outObj = new ObjectOutputStream(connection.getOutputStream());
                 inObj = new ObjectInputStream(connection.getInputStream());
@@ -134,8 +138,7 @@ public class GameInit {
                     if (!res) // player accepted
                     {
                         joinedPlyNum++;
-                        Player_ServerSide player = new Player_ServerSide(msg.getContent() , connection , sharedInbox);
-                        player.setReadyMsgs(readyMsgs);
+                        Player_ServerSide player = new Player_ServerSide(msg.getContent() , connection ,inObj , outObj, sharedInbox ,readyMsgs);
                         server.addPlayer(player);
                         player.getMsgReceiver().getThread().start();
                         outObj.writeObject(new Message(server.getName(), "allow" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
@@ -170,10 +173,11 @@ public class GameInit {
         }
 
         int readyGotNum = 0;
-        while (readyGotNum < 10)
+        while (readyGotNum < config.getPlayerNumbers())
         {
             try {
                 Message rdMsg = readyMsgs.take();
+                server.notifyList(players ,rdMsg);
                 readyGotNum++;
             }catch (InterruptedException e)
             {

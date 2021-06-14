@@ -6,26 +6,17 @@ import utils.logClasses.Logger;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
 
 public class MsgSender {
-    private Socket connection;
     private ObjectOutputStream outObj;
 
     /**
      * constructor
-     * @param connection opened socket to player
+     * @param outObj opened object output stream
      */
-    public MsgSender(Socket connection)
+    public MsgSender(ObjectOutputStream outObj)
     {
-        this.connection = connection;
-        try {
-            outObj = new ObjectOutputStream(connection.getOutputStream());
-        }catch (IOException e){
-            Logger.log("can't make output object stream." , LogLevels.ERROR , MsgSender.class.getName());
-            System.out.println("Error.can't make output object stream. exiting...");
-            System.exit(-1);
-        }
+        this.outObj = outObj;
     }
 
     /**
@@ -34,7 +25,7 @@ public class MsgSender {
      */
     public void sendMsg(Message msg){
         try {
-            outObj.writeObject(msg);
+            outObj.writeObject((Object) msg);
         }catch (IOException e){
             Logger.log( "can't send message to client" , LogLevels.ERROR, getClass().getName());
         }

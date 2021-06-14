@@ -7,7 +7,6 @@ public enum MessageTypes implements Serializable {
     ALL_PLAYERS_JOINED,
     PLAYER_IS_READY,
     ACTIONS_EXIT,
-    FAKE_MESSAGE,
     END_OF_GAME,
 
     INFO,
@@ -23,7 +22,6 @@ public enum MessageTypes implements Serializable {
 
     ACTIONS_GOD_SET_ROLE,
     ACTIONS_GOD_ORDERED_START,
-    ACTIONS_GOD_ORDERED_WAIT,
     ACTIONS_GOD_ORDERED_VOTE,
     ACTIONS_GOD_ORDERED_NIGHT_ACT,
     ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT,

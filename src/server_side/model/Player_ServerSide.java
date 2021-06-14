@@ -5,6 +5,8 @@ import server_side.sendGet.MsgSender;
 import utils.Message;
 import utils.Role_Group;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -19,7 +21,6 @@ public class Player_ServerSide implements Serializable {
     private transient MsgSender msgSender;
     private transient MsgReceiver msgReceiver;
     private transient ArrayBlockingQueue<Message> sharedInbox;
-    private transient LinkedTransferQueue<Message> readyMsgs;
     private boolean isSilenced;
 
 
@@ -28,14 +29,14 @@ public class Player_ServerSide implements Serializable {
      * @param name of player
      * @param connection is the opened socket of player
      */
-    public Player_ServerSide(String name , Socket connection , ArrayBlockingQueue<Message> sharedInbox)
+    public Player_ServerSide(String name , Socket connection , ObjectInputStream inObj , ObjectOutputStream outObj , ArrayBlockingQueue<Message> sharedInbox , LinkedTransferQueue<Message> readyMsgs)
     {
         this.connection = connection;
         this.sharedInbox = sharedInbox;
         this.name = name;
         isAlive = true;
-        msgSender = new MsgSender(connection);
-        msgReceiver = new MsgReceiver(connection , sharedInbox);
+        msgSender = new MsgSender(outObj);
+        msgReceiver = new MsgReceiver(name , inObj , sharedInbox , readyMsgs);
         isSilenced = false;
     }
 
@@ -85,14 +86,6 @@ public class Player_ServerSide implements Serializable {
      */
     public MsgSender getMsgSender() {
         return msgSender;
-    }
-
-    /**
-     * to set a shared inbox for ready messages
-     * @param readyMsgs readyMsg inbox
-     */
-    public void setReadyMsgs(LinkedTransferQueue<Message> readyMsgs) {
-        this.readyMsgs = readyMsgs;
     }
 
     /**

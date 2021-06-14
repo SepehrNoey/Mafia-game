@@ -28,7 +28,6 @@ public class Player implements Serializable {
     private Role_Group group;
     private MsgReceiver msgReceiver;
     private MsgSender msgSender;
-    private Message startMsg;
     private Config config;
     private LinkedTransferQueue<Message> closeChatroomMsg;
     private boolean isSilenced;
@@ -40,7 +39,7 @@ public class Player implements Serializable {
      * @param role role of this player
      * @param group mafia group or citizen group
      */
-    public Player(String name , Socket socket , Role_Group role , Role_Group group){
+    public Player(String name , Socket socket, ObjectInputStream inObj , ObjectOutputStream outObj, Role_Group role , Role_Group group , LinkedTransferQueue<Message> startMsg){
         closeChatroomMsg = new LinkedTransferQueue<>();
         this.name = name;
         isAlive = true;
@@ -48,18 +47,11 @@ public class Player implements Serializable {
         liveConnection = socket;
         this.role = role;
         this.group = group;
-        try {
-            outObj = new ObjectOutputStream(liveConnection.getOutputStream());
-            inObj = new ObjectInputStream(liveConnection.getInputStream());
-            msgSender = new MsgSender(this); // may have bug here
-            msgReceiver = new MsgReceiver(this , closeChatroomMsg);
-            Logger.log(getName() + " added.", LogLevels.INFO ,getClass().getName());
-
-        }catch (IOException e){
-            Logger.log("cannot make input or output stream" , LogLevels.ERROR , Player.class.getName());
-            System.out.println("ERROR - exiting...");
-            System.exit(-1);
-        }
+        this.outObj = outObj;
+        this.inObj = inObj;
+        msgSender = new MsgSender(this); // may have bug here
+        msgReceiver = new MsgReceiver(this , closeChatroomMsg , startMsg);
+        Logger.log(getName() + " added.", LogLevels.INFO ,getClass().getName());
     }
 
     /**
@@ -68,135 +60,130 @@ public class Player implements Serializable {
      */
     public void playLoop(){
         Message msg = null;
-        while (true)
-        {
+        while (true) {
             msg = getMsg();
-            if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_SET_ROLE) {
-                // must be in this format, for example:  'MAFIA_GROUP GODFATHER' , or it can be 'CITIZEN_GROUP DETECTIVE'
-                String[] split = msg.getContent().trim().split(" ");
-                setGroup(roleFromString(split[0]));
-                setRole(roleFromString(split[1]));
-            } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_FIRST_NIGHT_GREETING) {
-                System.out.println("Now game starts.It's first night.Open your eyes...");
+            if (msg != null) {
+                if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_SET_ROLE) {
+                    // must be in this format, for example:  'MAFIA_GROUP GODFATHER' , or it can be 'CITIZEN_GROUP DETECTIVE'
+                    String[] split = msg.getContent().trim().split(" ");
+                    setGroup(roleFromString(split[0]));
+                    setRole(roleFromString(split[1]));
+                } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_FIRST_NIGHT_GREETING) {
+                    System.out.println("Now game starts.It's first night.Open your eyes...");
 
-                sleep(2000 , "interrupted while sleeping.");
+                    sleep(2000, "interrupted while sleeping.");
 
-                System.out.print("Shhhh...You are ");
-                System.out.print("\033[0;31m");
-                System.out.print(getRole());
-                System.out.print("\033[0m");
-                System.out.print(" in ");
-                System.out.print("\033[0;31m");
-                System.out.println(getGroup());
-                System.out.print("\033[0m");
+                    System.out.print("Shhhh...You are ");
+                    System.out.print("\033[0;31m");
+                    System.out.print(getRole());
+                    System.out.print("\033[0m");
+                    System.out.print(" in ");
+                    System.out.print("\033[0;31m");
+                    System.out.println(getGroup());
+                    System.out.print("\033[0m");
 
-                if (getRole() == Role_Group.MAYOR || getRole() == Role_Group.DOCTOR || getGroup() == Role_Group.MAFIA_GROUP) {
-                    // teammates in this format: sepehr,ali,sahand, ... or it can be 'nobody' which means no teammates
-                    String[] split = getMsg().getContent().split(",");
-                    if (split[0].equals("nobody")) {
-                        System.out.println("You have no teammate at nights!");
-                    } else {
-                        System.out.println("Your teammates:");
-                        for (String name : split) {
-                            System.out.print("\033[0;31m");
-                            System.out.println(name);
-                            System.out.print("\033[0m");
+                    if (getRole() == Role_Group.MAYOR || getRole() == Role_Group.DOCTOR || getGroup() == Role_Group.MAFIA_GROUP) {
+                        // teammates in this format: sepehr,ali,sahand, ... or it can be 'nobody' which means no teammates
+                        String[] split = getMsg().getContent().split(",");
+                        if (split[0].equals("nobody")) {
+                            System.out.println("You have no teammate at nights!");
+                        } else {
+                            System.out.println("Your teammates:");
+                            for (String name : split) {
+                                System.out.print("\033[0;31m");
+                                System.out.println(name);
+                                System.out.print("\033[0m");
+                            }
                         }
                     }
-                }
-                System.out.println("Night greeting ended.going for day...");
+                    System.out.println("Night greeting ended.going for day...");
 
-            } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT){ // all acts are implemented by typing the act name by client
-                int roleTime = config.getEachRoleNightActingTime();
-                System.out.println("It's night now.");
-                System.out.print("You have ");
-                System.out.print("\033[0;31m");
-                System.out.print(String.valueOf(roleTime) + "s");
-                System.out.print("\033[0m");
-                System.out.println(" for doing your role...");
-                startMsgSender();
-                startMsgReceiver();
-
-                // here , waits until server lets to go on
-                Message closeMsg = getCloseMsg("interrupted in getting close chatroom message. shouldn't happen! - for " + getName());
-
-                System.out.println("Time ended.going for day...");
-                stopMsgSender();
-                stopMsgReceiver();
-            }else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT)
-            {
-                System.out.println("Last night summary: ");
-                System.out.print("\033[0;36m");
-                System.out.println(msg.getContent());
-                System.out.print("\033[0m");
-
-                if (!isSilenced)
-                {
+                } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT) { // all acts are implemented by typing the act name by client
+                    int roleTime = config.getEachRoleNightActingTime();
+                    System.out.println("It's night now.");
+                    System.out.print("You have ");
+                    System.out.print("\033[0;31m");
+                    System.out.print(String.valueOf(roleTime) + "s");
+                    System.out.print("\033[0m");
+                    System.out.println(" for doing your role...");
                     startMsgSender();
                     startMsgReceiver();
-                }
 
-                Message closeMsg = getCloseMsg("interrupted in getting transfer msg in day. - for " + getName());
+                    // here , waits until server lets to go on
+                    Message closeMsg = getCloseMsg("interrupted in getting close chatroom message. shouldn't happen! - for " + getName());
 
-                if (!isSilenced)
-                {
-                    stopMsgReceiver();
+                    System.out.println("Time ended.going for day...");
                     stopMsgSender();
-                }
-                System.out.println("Day time ended.going for vote...");
+                    stopMsgReceiver();
+                } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT) {
+                    System.out.println("Last night summary: ");
+                    System.out.print("\033[0;36m");
+                    System.out.println(msg.getContent());
+                    System.out.print("\033[0m");
 
-            }else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_VOTE) // the incoming message for this must be in special format:
+                    if (!isSilenced) {
+                        startMsgSender();
+                        startMsgReceiver();
+                    }
+
+                    Message closeMsg = getCloseMsg("interrupted in getting transfer msg in day. - for " + getName());
+
+                    if (!isSilenced) {
+                        stopMsgReceiver();
+                        stopMsgSender();
+                    }
+                    System.out.println("Day time ended.going for vote...");
+
+                } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_VOTE) // the incoming message for this must be in special format:
                 // player1Name,player2Name,player3Name,....
-            {
-                setSilenced(false);
-                System.out.print("\033[0;31m");
-                System.out.print("Attention!");
-                System.out.print("\033[0m");
-                System.out.println(" Enter your vote in the following format:(voting to yourself will be ignored!)");
-                System.out.print("\033[0;31m");
-                System.out.println("vote PlayerName");
-                System.out.println();
-                System.out.print("\033[0m");
-                System.out.print("You have ");
-                System.out.print("\033[0;31m");
-                System.out.print(String.valueOf(config.getVotingTime()) + "s");
-                System.out.print("\033[0m");
-                System.out.println(" for voting...");
-                System.out.println();
-
-                String[] split = msg.getContent().trim().split(",");
-                for (int i = 1 ; i <= split.length ; i++)
                 {
-                    System.out.println(i + ") " + split[i-1]);
+                    setSilenced(false);
+                    System.out.print("\033[0;31m");
+                    System.out.print("Attention!");
+                    System.out.print("\033[0m");
+                    System.out.println(" Enter your vote in the following format:(voting to yourself will be ignored!)");
+                    System.out.print("\033[0;31m");
+                    System.out.println("vote PlayerName");
+                    System.out.println();
+                    System.out.print("\033[0m");
+                    System.out.print("You have ");
+                    System.out.print("\033[0;31m");
+                    System.out.print(String.valueOf(config.getVotingTime()) + "s");
+                    System.out.print("\033[0m");
+                    System.out.println(" for voting...");
+                    System.out.println();
+
+                    String[] split = msg.getContent().trim().split(",");
+                    for (int i = 1; i <= split.length; i++) {
+                        System.out.println(i + ") " + split[i - 1]);
+                    }
+                    startMsgSender();
+                    startMsgReceiver();
+
+                    Message closeMsg = getCloseMsg("interrupted in getting transfer msg. - voting time - for" + getName());
+
+                    stopMsgSender();
+                    stopMsgReceiver();
+                    System.out.println("Voting time ended. The one who goes out is ...");
+                    msg = getMsg(); // result of voting
+
+                    System.out.print("\033[0;31m");
+                    System.out.println(msg.getContent());
+                    System.out.print("\033[0m");
+                    System.out.println();
+                    System.out.println("Going for another night...");
+
+                } else if (msg.getMsgType() == MessageTypes.END_OF_GAME) {
+                    System.out.println(msg.getContent()); // special content should be made in server
+                    try {
+                        inObj.close();
+                        outObj.close();
+                        liveConnection.close();
+                    } catch (IOException e) {
+                        Logger.log("can't close objectInput or output , or socket.", LogLevels.WARN, getClass().getName());
+                    }
+                    System.exit(0);
                 }
-                startMsgSender();
-                startMsgReceiver();
-
-                Message closeMsg = getCloseMsg("interrupted in getting transfer msg. - voting time - for" + getName());
-
-                stopMsgSender();
-                stopMsgReceiver();
-                System.out.println("Voting time ended. The one who goes out is ...");
-                msg = getMsg(); // result of voting
-
-                System.out.print("\033[0;31m");
-                System.out.println(msg.getContent());
-                System.out.print("\033[0m");
-                System.out.println();
-                System.out.println("Going for another night...");
-
-            }else if (msg.getMsgType() == MessageTypes.END_OF_GAME)
-            {
-                System.out.println(msg.getContent()); // special content should be made in server
-                try {
-                    inObj.close();
-                    outObj.close();
-                    liveConnection.close();
-                }catch (IOException e)
-                {
-                    Logger.log("can't close objectInput or output , or socket." , LogLevels.WARN , getClass().getName());
-                }
-                System.exit(0);
             }
         }
     }
@@ -252,7 +239,6 @@ public class Player implements Serializable {
         try
         {
             return (Message)inObj.readObject();
-
         }catch (IOException e){
             Logger.log("can't get message object from server." , LogLevels.ERROR , getClass().getName());
         }
@@ -260,14 +246,6 @@ public class Player implements Serializable {
             Logger.log("can't find the class Message." , LogLevels.ERROR , getClass().getName());
         }
         return null;
-    }
-
-    /**
-     * to know if is allowed to chat
-     * @return allowed == true , not allowed == false
-     */
-    public boolean isAllowedToChat() {
-        return isAllowedToChat;
     }
 
     /**
@@ -362,22 +340,6 @@ public class Player implements Serializable {
         if (str.equals(Role_Group.DIE_HARD.toString()))
             return Role_Group.DIE_HARD;
         else return null;
-    }
-
-    /**
-     * to get identify the start message between chats , when the game isn't started yet
-     * @param startMsg message got from server
-     */
-    public void setStartMsg(Message startMsg) {
-        this.startMsg = startMsg;
-    }
-
-    /**
-     * to access start message for syncing msgReceiver and player
-     * @return start message
-     */
-    public Message getStartMsg() {
-        return startMsg;
     }
 
     /**

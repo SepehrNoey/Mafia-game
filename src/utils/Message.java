@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author Sepehr Noey
  * @version 1.0
  */
-public class Message implements Serializable {
+public class Message implements Serializable{
     private String sender;
     private ChatroomType chatroomType;
     private String content;

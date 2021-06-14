@@ -80,7 +80,6 @@ public class MsgSender implements Runnable{
     public void run() {
         while (!thread.isInterrupted())
         {
-            scanner.nextLine();
             String userInput = scanner.nextLine();
             String[] split = userInput.trim().split(" ");
             String target = null;
