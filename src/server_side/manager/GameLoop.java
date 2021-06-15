@@ -97,48 +97,92 @@ public class GameLoop {
         if (roleToPlayer.containsKey(Role_Group.GODFATHER))
             server.notifyMember(roleToPlayer.get(Role_Group.GODFATHER) ,new Message(server.getName(),"order to do night act." ,ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT  , null));
         System.out.println("Waiting for mafias to do their act at night...");
+        server.notifyList(server.getPlayers() , new Message(server.getName(), "Mafia group , open your eyes...." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+        server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Mafia group , open your eyes...." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
         sleep(time , "interrupted while sleeping - in night method - after mafia acting.");
+        server.notifyList(server.getPlayers() , new Message(server.getName(), "Mafia group , your time ended , close your eyes...." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+        server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Mafia group , your time ended , close your eyes...." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
 
+        if (gameState.getConfig().getPlayerNumbers() != 5)
+        {
+            sleep(1000 , "waiting before lecter interrupting");
+            server.notifyList(server.getPlayers() , new Message(server.getName() , "Lecter , open your eyes ..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null)); // notifying all , even if lecter is dead
+            server.notifyList(server.getGameWatchers() , new Message(server.getName() , "Lecter , open your eyes ..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null)); // notifying all , even if lecter is dead
 
-        if (roleToPlayer.containsKey(Role_Group.DOCTOR_LECTER))
-            server.notifyMember(roleToPlayer.get(Role_Group.DOCTOR_LECTER) , new Message(server.getName() , "order to lecter to save someone." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
-        if (gameState.getConfig().getPlayerNumbers() != 5) { // in the third plan , we don't have doctor lecter
+            if (roleToPlayer.containsKey(Role_Group.DOCTOR_LECTER))
+                server.notifyMember(roleToPlayer.get(Role_Group.DOCTOR_LECTER) , new Message(server.getName() , "order to lecter to save someone." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
+
             System.out.println("Waiting for lecter ...");
             sleep(time, "interrupted while sleeping - in night method - after lecter acting.");
+            server.notifyList(server.getPlayers() , new Message(server.getName(), "Lecter ,time ended , close your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+            server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Lecter ,time ended, close your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+
         }
+
+        sleep(1000 , "interrupted before doctor acting...");
+        server.notifyList(server.getPlayers() , new Message(server.getName(), "Now , Doctor open your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+        server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Now , Doctor open your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
 
         if(roleToPlayer.containsKey(Role_Group.DOCTOR))
             server.notifyMember(roleToPlayer.get(Role_Group.DOCTOR) , new Message(server.getName() , "order to doctor to save someone." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
         System.out.println("Waiting for doctor...");
         sleep(time , "interrupted in sleeping - in night method - after doctor acting.");
+        server.notifyList(server.getPlayers() , new Message(server.getName(), "Doctor , time ended close your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+        server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Doctor , time ended close your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+
+        sleep(1000 , "interrupted before detective acting.");
+        server.notifyList(server.getPlayers() , new Message(server.getName(), "Detective , open your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+        server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Detective , open your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
 
         if (roleToPlayer.containsKey(Role_Group.DETECTIVE))
             server.notifyMember(roleToPlayer.get(Role_Group.DETECTIVE) , new Message(server.getName(), "order to detective to do inquiry." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
         System.out.println("Waiting for detective...");
         sleep(time , "interrupted in sleeping - in night method - after detective acting.");
+        server.notifyList(server.getPlayers() , new Message(server.getName(), "Detective , your time ended , close your eyes...", ChatroomType.TO_CLIENT ,MessageTypes.INFO ,null));
+        server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Detective , your time ended , close your eyes...", ChatroomType.TO_CLIENT ,MessageTypes.INFO ,null));
+        sleep(1000, "interrupted before sniper acting");
 
-        if (roleToPlayer.containsKey(Role_Group.SNIPER))
-            server.notifyMember(roleToPlayer.get(Role_Group.SNIPER) , new Message(server.getName(), "order to sniper to snipe if can." ,ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
         if (gameState.getConfig().getPlayerNumbers() != 5)
         {
+            server.notifyList(server.getPlayers() , new Message(server.getName(), "Sniper , open your eyes..." , ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+            server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Sniper , open your eyes..." , ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+            if (roleToPlayer.containsKey(Role_Group.SNIPER))
+                server.notifyMember(roleToPlayer.get(Role_Group.SNIPER) , new Message(server.getName(), "order to sniper to snipe if can." ,ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
             System.out.println("Waiting for sniper...");
             sleep(time , "interrupted in sleeping - in night method - after sniper acting.");
+            server.notifyList(server.getPlayers() , new Message(server.getName() , "Sniper , close your eyes..." , ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+            server.notifyList(server.getGameWatchers() , new Message(server.getName() , "Sniper , close your eyes..." , ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+            sleep(1000 , "interrupted after sniper");
         }
 
-        if (roleToPlayer.containsKey(Role_Group.PSYCHOLOGIST))
-            server.notifyMember(roleToPlayer.get(Role_Group.PSYCHOLOGIST) , new Message(server.getName(), "order to do psychologist act." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
-        if (gameState.getConfig().getPlayerNumbers() == 10) {
+        if (gameState.getConfig().getPlayerNumbers() == 10)
+        {
+            server.notifyList(server.getPlayers() , new Message(server.getName(), "Psychologist , open your eyes...", ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+            server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Psychologist , open your eyes...", ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+            if (roleToPlayer.containsKey(Role_Group.PSYCHOLOGIST))
+                server.notifyMember(roleToPlayer.get(Role_Group.PSYCHOLOGIST) , new Message(server.getName(), "order to do psychologist act." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
             System.out.println("Waiting for psychologist...");
             sleep(time,"interrupted in sleeping - in night method - after psychologist acting.");
+            server.notifyList(server.getPlayers() , new Message(server.getName() , "Psychologist , close your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+            server.notifyList(server.getGameWatchers() , new Message(server.getName() , "Psychologist , close your eyes..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+            sleep(1000 , "interrupted after psychologist.");
         }
 
-        if (roleToPlayer.containsKey(Role_Group.DIE_HARD))
-            server.notifyMember(roleToPlayer.get(Role_Group.DIE_HARD) , new Message(server.getName(), "order to die hard to act." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
         if (gameState.getConfig().getPlayerNumbers() != 5)
         {
+            server.notifyList(server.getPlayers() , new Message(server.getName() , "Die Hard , open your eyes...",ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+            server.notifyList(server.getGameWatchers() , new Message(server.getName() , "Die Hard , open your eyes...",ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+            if (roleToPlayer.containsKey(Role_Group.DIE_HARD))
+                server.notifyMember(roleToPlayer.get(Role_Group.DIE_HARD) , new Message(server.getName(), "order to die hard to act." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT , null));
             System.out.println("Waiting for die hard...");
             sleep(time,"interrupted in sleeping - in night method - after die hard acting.");
+            server.notifyList(server.getPlayers() ,new Message(server.getName(), "Die Hard , time ended close your eyes...", ChatroomType.TO_CLIENT , MessageTypes.INFO ,null));
+            server.notifyList(server.getGameWatchers() ,new Message(server.getName(), "Die Hard , time ended close your eyes...", ChatroomType.TO_CLIENT , MessageTypes.INFO ,null));
         }
+
+        server.notifyList(server.getPlayers() , new Message(server.getName(), "Night ended . Going for day...",ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+        server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Night ended . Going for day...",ChatroomType.TO_CLIENT,MessageTypes.INFO,null));
+        sleep(2000 , "interrupted in end of night");
 
     }
 

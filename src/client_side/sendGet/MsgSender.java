@@ -110,7 +110,7 @@ public class MsgSender implements Runnable{
 
                 // inquiry can be one word or two word command , depending on player's role
 
-                else if (userInput.trim().equalsIgnoreCase("inquiry")) {
+                else if (split[0].trim().equalsIgnoreCase("inquiry")) {
                     if (player.getRole() == Role_Group.DETECTIVE)
                         player.sendMsg(player.getName() + " requests for inquiry for " + target + ".", ChatroomType.TO_GOD, MessageTypes.ACTIONS_DETECTIVE_ORDERED_INQUIRY, target);
                     else if (player.getRole() == Role_Group.DIE_HARD)
