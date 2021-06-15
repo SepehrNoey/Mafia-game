@@ -2,6 +2,12 @@ package utils;
 
 import java.io.Serializable;
 
+/**
+ * the settings of game
+ *
+ * @author Sepehr Noey
+ * @version 1.0
+ */
 public class Config implements Serializable {
     private int PLAYER_NUMBERS;
     private int DAY_TIME ; // in minutes

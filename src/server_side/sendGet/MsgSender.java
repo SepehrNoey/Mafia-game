@@ -7,6 +7,12 @@ import utils.logClasses.Logger;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
+/**
+ * a class to send message to a client - runs on main thread - not a separate thread
+ *
+ * @author Sepehr Noey
+ * @version 1.0
+ */
 public class MsgSender {
     private ObjectOutputStream outObj;
 
@@ -34,4 +40,11 @@ public class MsgSender {
         }
     }
 
+    /**
+     * getter
+     * @return object input stream
+     */
+    public ObjectOutputStream getOutObj() {
+        return outObj;
+    }
 }

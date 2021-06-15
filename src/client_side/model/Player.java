@@ -392,4 +392,20 @@ public class Player implements Serializable {
     public boolean isSilenced() {
         return isSilenced;
     }
+
+    /**
+     * getter
+     * @return object input stream
+     */
+    public ObjectInputStream getInObj() {
+        return inObj;
+    }
+
+    /**
+     * getter
+     * @return object output stream
+     */
+    public ObjectOutputStream getOutObj() {
+        return outObj;
+    }
 }

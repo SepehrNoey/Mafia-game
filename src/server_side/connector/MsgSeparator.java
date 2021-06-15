@@ -7,6 +7,7 @@ import utils.*;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
+import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -65,7 +66,7 @@ public class MsgSeparator implements Runnable {
                     Logger.log(msg.getSender() + " did inquiry." , LogLevels.INFO ,getClass().getName());
                     System.out.println(msg.getSender() + " did inquiry.");
                 }
-                else if ((msg.getMsgType() == MessageTypes.ACTIONS_DOCTOR_ORDERED_SAVE || msg.getMsgType() == MessageTypes.ACTIONS_LECTER_ORDERED_SAVE) && logic.isSaveValid(msg))
+                else if ((msg.getMsgType() == MessageTypes.ACTIONS_DOCTOR_ORDERED_SAVE || msg.getMsgType() == MessageTypes.ACTIONS_LECTER_ORDERED_SAVE))
                 {
                     state = logic.isSaveValid(msg);
                     if (state)
@@ -125,12 +126,50 @@ public class MsgSeparator implements Runnable {
                 }
                 else if(msg.getMsgType() == MessageTypes.ANSWER_TO_WATCH)
                 {
-                    if (msg.getContent().equalsIgnoreCase("yes"))
+                    if (msg.getContent().equalsIgnoreCase("yes")){
                         server.getGameWatchers().add(server.getPlayerByName(server.getOutOfGame(), msg.getSender()));
+                        server.getPlayerByName(server.getGameWatchers() , msg.getSender()).getMsgSender().sendMsg(new Message(server.getName(), "Ok , the events will be sent to you!" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                        System.out.println("I got answer to watch!!!!!");
+                        // closing inputStream???
+                    }
+                    else if (msg.getContent().equals("no"))
+                    {
+                        Player_ServerSide exiting = server.getPlayerByName(server.getOutOfGame() , msg.getSender());
+                        exiting.getMsgSender().sendMsg(new Message(server.getName(), "Thanks for playing with us! Good Bye!",ChatroomType.TO_CLIENT,MessageTypes.END_OF_GAME , null));
+                        server.notifyList(server.getPlayers() , new Message(server.getName(), exiting.getName() + " quit the game." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                        try {
+                            exiting.getMsgReceiver().stopMsgReceiver();
+                            exiting.getMsgReceiver().getInObj().close();
+                            exiting.getMsgSender().getOutObj().close();
+                            exiting.getConnection().close();
+                            exiting.getMsgReceiver().getThread().join();
+                        }catch (IOException e)
+                        {
+                            System.out.println("couldn't close socket or streams.");
+                        }
+                    }
                 }
                 else if (msg.getMsgType() == MessageTypes.ANSWER_TO_CANCEL)
                 {
                     server.getCancelMsg().transfer(msg);
+                }
+                else if (msg.getMsgType() == MessageTypes.ACTIONS_EXIT){
+                    server.notifyList(server.getPlayers() , new Message(server.getName(), msg.getSender() + " left the game!" ,ChatroomType.TO_CLIENT , MessageTypes.INFO,null));
+                    server.notifyList(server.getGameWatchers() , new Message(server.getName(), msg.getSender() + " left the game!" ,ChatroomType.TO_CLIENT , MessageTypes.INFO,null));
+                    Player_ServerSide exiting = server.getPlayerByName(server.getPlayers() , msg.getSender());
+                    server.getOutOfGame().add(exiting);
+                    server.getRoleToPlayer().remove(exiting.getRole());
+                    server.getPlayers().remove(exiting);
+                    try {
+                        exiting.getMsgReceiver().stopMsgReceiver();
+                        exiting.getMsgReceiver().getInObj().close();
+                        exiting.getMsgSender().getOutObj().close();
+                        exiting.getConnection().close();
+                        exiting.getMsgReceiver().getThread().join();
+                    }catch (IOException e)
+                    {
+                        System.out.println("couldn't close socket or streams.");
+                    }
                 }
                 else { // normal chat
                     if (actor.getRole() == null){  // a trick to know if the game is started or not ( role == null means the game hasn't started yet)

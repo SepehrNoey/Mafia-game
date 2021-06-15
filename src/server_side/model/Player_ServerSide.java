@@ -12,6 +12,12 @@ import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
+/**
+ * a class to keep data of players at server side
+ *
+ * @author Sepehr Noey
+ * @version 1.0
+ */
 public class Player_ServerSide implements Serializable {
     private String name;
     private Role_Group role;

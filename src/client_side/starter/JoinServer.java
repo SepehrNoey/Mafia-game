@@ -91,7 +91,6 @@ public class JoinServer {
                                         System.out.println("Interrupted in startMsg taking. for " + player.getName());
                                         Logger.log("Interrupted in startMsg taking. for " + player.getName() , LogLevels.ERROR , JoinServer.class.getName());
                                     }
-//                                    player.stopMsgReceiver();
                                     player.playLoop();  // starting point for game in client side
 
                                 }

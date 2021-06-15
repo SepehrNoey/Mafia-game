@@ -72,6 +72,13 @@ public class MsgSender implements Runnable{
                     player.sendMsg(player.getName() + " exited", ChatroomType.TO_GOD, MessageTypes.ACTIONS_EXIT, null);
                     Logger.log(player.getName() + " exited.", LogLevels.INFO, this.getClass().getName());
                     System.out.println("Thanks for playing with us :)");
+                    try {
+                        player.getInObj().close();
+                        player.getOutObj().close();
+                        player.getLiveConnection().close();
+                    }catch (IOException e){
+                        System.out.println("Can't close socket or streams.");
+                    }
                     System.exit(0);
                 } else if (userInput.trim().equalsIgnoreCase("ready")) {
                     player.sendMsg(player.getName() + " is ready to start.", ChatroomType.TO_GOD, MessageTypes.PLAYER_IS_READY, null);

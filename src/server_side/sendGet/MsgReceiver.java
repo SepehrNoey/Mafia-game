@@ -10,6 +10,12 @@ import java.io.ObjectInputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
+/**
+ * a separate runnable thread to get messages from clients
+ *
+ * @author Sepehr Noey
+ * @version 1.0
+ */
 public class MsgReceiver implements Runnable {
     private Thread thread;
     private ObjectInputStream inObj;
@@ -91,5 +97,13 @@ public class MsgReceiver implements Runnable {
      */
     public void stopMsgReceiver(){
         thread.interrupt();
+    }
+
+    /**
+     * getter
+     * @return objectInputStream
+     */
+    public ObjectInputStream getInObj() {
+        return inObj;
     }
 }

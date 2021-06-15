@@ -22,7 +22,7 @@ import java.util.concurrent.LinkedTransferQueue;
 
 /**
  * belongs to 'mafia game'
- * this class is written for initializing and giving the rest to Server class
+ * this class is written for initializing and giving the rest to other classes - the starting point in server side
  *
  * @author Sepehr Noey
  * @version 1.0

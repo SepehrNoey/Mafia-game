@@ -8,7 +8,8 @@ import utils.StateEnum;
 import java.io.Serializable;
 
 /**
- * this class will be used for saving data in file and also accessing to needed data in any class in server side
+ * this class will be used for saving data in file (if i have time to use it)
+ *
  *
  * @author Sepehr Noey
  * @version 1.0

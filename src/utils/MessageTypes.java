@@ -2,6 +2,9 @@ package utils;
 
 import java.io.Serializable;
 
+/**
+ * different types of messages
+ */
 public enum MessageTypes implements Serializable {
     JOIN_REQUEST,
     ALL_PLAYERS_JOINED,

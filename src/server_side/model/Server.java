@@ -12,6 +12,12 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
+/**
+ * server class , stores players with their sockets and also game watchers and many more
+ *
+ * @author Sepehr Noey
+ * @version 1.0
+ */
 public class Server {
     private final String name;
     private ServerSocket welcomeSocket;
@@ -375,8 +381,8 @@ public class Server {
         for (Player_ServerSide player:outOfGame)
         {
             try {
-                player.getConnection().close();
-
+                if (!player.getConnection().isClosed())
+                    player.getConnection().close();
             }catch (IOException e)
             {
                 Logger.log(player.getName() + " can't close connection." , LogLevels.WARN , getClass().getName());

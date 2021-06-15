@@ -8,6 +8,12 @@ import utils.logClasses.Logger;
 
 import java.util.Map;
 
+/**
+ * this class will handle round of game
+ *
+ * @author Sepehr Noey
+ * @version 1.0
+ */
 public class GameLoop {
     private Server server;
     private GameState gameState;
@@ -24,6 +30,9 @@ public class GameLoop {
         this.gameState = gameState;
     }
 
+    /**
+     * the main loop of the game at server side
+     */
     public void playLoop() {
         sleep(3000 , "interrupted while sleeping in first of playLoop."); // to make sure that player has entered in its playLoop
         for (Player_ServerSide player: server.getPlayers())
@@ -50,6 +59,9 @@ public class GameLoop {
         // the end
     }
 
+    /**
+     * a method to handle firstNight events
+     */
     public void firstNight(){
         server.notifyList(server.getPlayers() , new Message(server.getName(),"First night greeting." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_FIRST_NIGHT_GREETING , null));
         sleep(2000 , "interrupted in sleeping after first night.");
@@ -85,7 +97,9 @@ public class GameLoop {
         sleep(3000 , "interrupted in end of first night.");
     }
 
-
+    /**
+     * a method to handle night events
+     */
     public void night(){
         // msgSeparator is working alongside this method
         int time = gameState.getConfig().getEachRoleNightActingTime() * 1000;
@@ -186,6 +200,9 @@ public class GameLoop {
 
     }
 
+    /**
+     * a method for handling day chats and notifying
+     */
     public void day(){
         server.notifyList(server.getPlayers(), new Message(server.getName() ,"It's day now , you have " + gameState.getConfig().getDayTime() + " minutes to chat ..." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT , null));
         server.notifyList(server.getGameWatchers(), new Message(server.getName() ,"It's day now , players are chatting..." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT , null));
@@ -198,6 +215,9 @@ public class GameLoop {
         sleep(1500 , "interrupted in end of day");
     }
 
+    /**
+     * a method to handle voting events
+     */
     public void voting(){
         String names = "";
         for (Player_ServerSide player: server.getPlayers())
