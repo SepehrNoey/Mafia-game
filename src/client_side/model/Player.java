@@ -110,6 +110,7 @@ public class Player implements Serializable {
                     System.out.println("Night greeting ended.going for day...");
 
                 } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT) { // all acts are implemented by typing the act name by client
+                    msgSender.setAllowedToChat(true);
                     int roleTime = config.getEachRoleNightActingTime();
                     System.out.println("It's night now.");
                     System.out.print("You have ");
@@ -117,34 +118,33 @@ public class Player implements Serializable {
                     System.out.print(String.valueOf(roleTime) + "s");
                     System.out.print("\033[0m");
                     System.out.println(" for doing your role...");
-//                    startMsgSender();
-//                    startMsgReceiver();
 
                     // here , waits until server lets to go on
                     Message closeMsg = getCloseMsg("interrupted in getting close chatroom message. shouldn't happen! - for " + getName());
 
                     System.out.println("Time ended.going for day...");
-                    stopMsgSender();
+                    msgSender.setAllowedToChat(false);
                 } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT) {
-                    System.out.println("Last night summary: ");
+                    msgSender.setAllowedToChat(true);
+                    System.out.println();
                     System.out.print("\033[0;36m");
                     System.out.println(msg.getContent());
                     System.out.print("\033[0m");
 
-//                    startMsgReceiver();  why exception ????
                     if (!isSilenced) {
                         msgSender.setAllowedToChat(true);
                     }
 
                     Message closeMsg = getCloseMsg("interrupted in getting transfer msg in day. - for " + getName());
 
-                    stopMsgSender();
+                    msgSender.setAllowedToChat(false);
 
                     System.out.println("Day time ended.going for vote...\n");
 
                 } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_VOTE) // the incoming message for this must be in special format:
                 // player1Name,player2Name,player3Name,....
                 {
+                    msgSender.setAllowedToChat(true);
                     setSilenced(false);
                     System.out.print("\033[0;31m");
                     System.out.print("Attention!");
@@ -165,13 +165,13 @@ public class Player implements Serializable {
                     for (int i = 1; i <= split.length; i++) {
                         System.out.println(i + ") " + split[i - 1]);
                     }
-                    msgSender.setAllowedToChat(true);
-//                    startMsgReceiver();
 
                     Message closeMsg = getCloseMsg("interrupted in getting transfer msg. - voting time - for" + getName());
 
-                    stopMsgSender();
-//                    stopMsgReceiver();
+                    if (getRole() != Role_Group.MAYOR)
+                        msgSender.setAllowedToChat(false);
+
+
                     System.out.println("Voting time ended. The one who goes out is ...");
                     try {
                         msg = loopMsg.take(); // result of voting
@@ -207,14 +207,6 @@ public class Player implements Serializable {
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * to know if a player is alive or not
-     * @return true if the player is alive , false if not
-     */
-    public boolean isAlive(){
-        return isAlive;
     }
 
     /**
@@ -281,26 +273,11 @@ public class Player implements Serializable {
         return role;
     }
 
-
-    /**
-     * to stop msgReceiver
-     */
-    public void stopMsgReceiver(){
-        msgReceiver.getThread().interrupt();
-    }
-
     /**
      * to start msgReceiver
      */
     public void startMsgReceiver(){
         msgReceiver.getThread().start();
-    }
-
-    /**
-     * to stop msgSender
-     */
-    public void stopMsgSender(){
-        msgSender.setAllowedToChat(false);
     }
 
     /**

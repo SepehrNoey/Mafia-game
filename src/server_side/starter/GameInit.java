@@ -107,46 +107,53 @@ public class GameInit {
         }
         server.setGameConfig(config);
         ServerSocket welcome = server.getWelcomeSocket();
-        ObjectOutputStream outObj;
-        ObjectInputStream inObj;
+        ObjectOutputStream outObj = null;
+        ObjectInputStream inObj = null;
         Message msg;
         int joinedPlyNum = 0;
         ArrayList<Player_ServerSide> players = new ArrayList<>();
+        Socket connection = null;
+
 
         while (joinedPlyNum < config.getPlayerNumbers())
         {
-            Socket connection = null;
             try {
                 System.out.println("Waiting for player " + (joinedPlyNum + 1) + "-th ..." );
-                connection = welcome.accept();
-                outObj = new ObjectOutputStream(connection.getOutputStream());
-                inObj = new ObjectInputStream(connection.getInputStream());
-                String emptyOrFull = server.currentPlyNum() >= config.getPlayerNumbers() ? "full" : "empty";
-                outObj.writeObject(new Message(server.getName(),server.getName() + "," + emptyOrFull + ",players: "
-                        + server.currentPlyNum() + "/" + config.getPlayerNumbers()
-                        , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
-                msg = (Message) inObj.readObject();
-                if (msg.getMsgType() == MessageTypes.ACTIONS_EXIT){
-                    continue; // skipping this time
+                if (connection == null) // means a new connection
+                {
+                    connection = welcome.accept();
+                    outObj = new ObjectOutputStream(connection.getOutputStream());
+                    inObj = new ObjectInputStream(connection.getInputStream());
+                    String emptyOrFull = server.currentPlyNum() >= config.getPlayerNumbers() ? "full" : "empty";
+                    outObj.writeObject(new Message(server.getName(),server.getName() + "," + emptyOrFull + ",players: "
+                            + server.currentPlyNum() + "/" + config.getPlayerNumbers()
+                            , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
                 }
-                else if (msg.getMsgType() == MessageTypes.JOIN_REQUEST){
-                    boolean res = server.isNameExist(msg.getContent());
-                    if (!res) // player accepted
-                    {
-                        joinedPlyNum++;
-                        Player_ServerSide player = new Player_ServerSide(msg.getContent() , connection ,inObj , outObj, sharedInbox ,readyMsgs);
-                        server.addPlayer(player);
-                        player.getMsgReceiver().getThread().start();
-                        outObj.writeObject(new Message(server.getName(), "allow" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
-                        outObj.writeObject(config);
-                        players.add(player);
-                        System.out.println(player.getName() + " joined.");
-                        if (!(joinedPlyNum == config.getPlayerNumbers()))
-                            System.out.println("Waiting for other players...");
+                if (inObj !=  null){
+                    msg = (Message) inObj.readObject();
+                    if (msg.getMsgType() == MessageTypes.ACTIONS_EXIT){
+                        continue; // skipping this time
                     }
-                    else
-                    {
-                        outObj.writeObject(new Message(server.getName() , "deny" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                    else if (msg.getMsgType() == MessageTypes.JOIN_REQUEST){
+                        boolean res = server.isNameExist(msg.getContent());
+                        if (!res) // player accepted
+                        {
+                            joinedPlyNum++;
+                            Player_ServerSide player = new Player_ServerSide(msg.getContent() , connection ,inObj , outObj, sharedInbox ,readyMsgs);
+                            server.addPlayer(player);
+                            player.getMsgReceiver().getThread().start();
+                            outObj.writeObject(new Message(server.getName(), "allow" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                            outObj.writeObject(config);
+                            players.add(player);
+                            System.out.println(player.getName() + " joined.");
+                            if (!(joinedPlyNum == config.getPlayerNumbers()))
+                                System.out.println("Waiting for other players...");
+                            connection = null;
+                        }
+                        else
+                        {
+                            outObj.writeObject(new Message(server.getName() , "deny" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                        }
                     }
                 }
 
