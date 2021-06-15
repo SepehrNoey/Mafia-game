@@ -11,7 +11,6 @@ import utils.logClasses.Logger;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.Socket;
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -92,8 +91,7 @@ public class JoinServer {
                                         System.out.println("Interrupted in startMsg taking. for " + player.getName());
                                         Logger.log("Interrupted in startMsg taking. for " + player.getName() , LogLevels.ERROR , JoinServer.class.getName());
                                     }
-                                    player.stopMsgReceiver();
-                                    player.stopMsgSender();
+//                                    player.stopMsgReceiver();
                                     player.playLoop();  // starting point for game in client side
 
                                 }
@@ -128,8 +126,7 @@ public class JoinServer {
             }
             catch (IOException e){
                 Logger.log(data[0] + " can't connect to server" , LogLevels.ERROR , JoinServer.class.getName());
-                System.out.println("Sorry! No seat for new players!. Exiting...");
-                System.exit(0);
+                System.out.println("Sorry! - Server doesn't exist or no seat for new players!. Try again...");
             }
         }
 

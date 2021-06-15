@@ -8,6 +8,7 @@ import utils.logClasses.Logger;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
 /**
@@ -20,7 +21,6 @@ import java.util.concurrent.LinkedTransferQueue;
 public class Player implements Serializable {
     private final String name;
     private boolean isAlive;
-    private boolean isAllowedToChat;
     private Socket liveConnection;
     private ObjectOutputStream outObj;
     private ObjectInputStream inObj;
@@ -29,8 +29,10 @@ public class Player implements Serializable {
     private MsgReceiver msgReceiver;
     private MsgSender msgSender;
     private Config config;
-    private LinkedTransferQueue<Message> closeChatroomMsg;
+    private LinkedTransferQueue<Message> nextStepMsg;
     private boolean isSilenced;
+    private LinkedTransferQueue<Message> loopMsg;
+    private ArrayBlockingQueue<Message> answerQueue;
 
     /**
      * constructor
@@ -40,17 +42,18 @@ public class Player implements Serializable {
      * @param group mafia group or citizen group
      */
     public Player(String name , Socket socket, ObjectInputStream inObj , ObjectOutputStream outObj, Role_Group role , Role_Group group , LinkedTransferQueue<Message> startMsg){
-        closeChatroomMsg = new LinkedTransferQueue<>();
+        answerQueue = new ArrayBlockingQueue<>(1);
+        nextStepMsg = new LinkedTransferQueue<>();
+        loopMsg = new LinkedTransferQueue<>();
         this.name = name;
         isAlive = true;
-        isAllowedToChat = true;
         liveConnection = socket;
         this.role = role;
         this.group = group;
         this.outObj = outObj;
         this.inObj = inObj;
-        msgSender = new MsgSender(this); // may have bug here
-        msgReceiver = new MsgReceiver(this , closeChatroomMsg , startMsg);
+        msgSender = new MsgSender(this , answerQueue); // may have bug here
+        msgReceiver = new MsgReceiver(this , nextStepMsg, startMsg , loopMsg , answerQueue);
         Logger.log(getName() + " added.", LogLevels.INFO ,getClass().getName());
     }
 
@@ -61,14 +64,14 @@ public class Player implements Serializable {
     public void playLoop(){
         Message msg = null;
         while (true) {
-            msg = getMsg();
+            try {
+                msg = loopMsg.take();
+            }catch (InterruptedException e)
+            {
+                Logger.log("interrupted in taking loop msg." , LogLevels.ERROR , getClass().getName());
+            }
             if (msg != null) {
-                if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_SET_ROLE) {
-                    // must be in this format, for example:  'MAFIA_GROUP GODFATHER' , or it can be 'CITIZEN_GROUP DETECTIVE'
-                    String[] split = msg.getContent().trim().split(" ");
-                    setGroup(roleFromString(split[0]));
-                    setRole(roleFromString(split[1]));
-                } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_FIRST_NIGHT_GREETING) {
+                if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_FIRST_NIGHT_GREETING) {
                     System.out.println("Now game starts.It's first night.Open your eyes...");
 
                     sleep(2000, "interrupted while sleeping.");
@@ -84,7 +87,15 @@ public class Player implements Serializable {
 
                     if (getRole() == Role_Group.MAYOR || getRole() == Role_Group.DOCTOR || getGroup() == Role_Group.MAFIA_GROUP) {
                         // teammates in this format: sepehr,ali,sahand, ... or it can be 'nobody' which means no teammates
-                        String[] split = getMsg().getContent().split(",");
+                        String[] split = null;
+                        try {
+                            split = loopMsg.take().getContent().split(",");
+
+                        }catch (InterruptedException e)
+                        {
+                            System.out.println("Error in taking teammate message in play loop . interrupted.");
+                            Logger.log("interrupted in taking loopMsg." , LogLevels.ERROR , getClass().getName());
+                        }
                         if (split[0].equals("nobody")) {
                             System.out.println("You have no teammate at nights!");
                         } else {
@@ -106,33 +117,30 @@ public class Player implements Serializable {
                     System.out.print(String.valueOf(roleTime) + "s");
                     System.out.print("\033[0m");
                     System.out.println(" for doing your role...");
-                    startMsgSender();
-                    startMsgReceiver();
+//                    startMsgSender();
+//                    startMsgReceiver();
 
                     // here , waits until server lets to go on
                     Message closeMsg = getCloseMsg("interrupted in getting close chatroom message. shouldn't happen! - for " + getName());
 
                     System.out.println("Time ended.going for day...");
                     stopMsgSender();
-                    stopMsgReceiver();
                 } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT) {
                     System.out.println("Last night summary: ");
                     System.out.print("\033[0;36m");
                     System.out.println(msg.getContent());
                     System.out.print("\033[0m");
 
+//                    startMsgReceiver();  why exception ????
                     if (!isSilenced) {
-                        startMsgSender();
-                        startMsgReceiver();
+                        msgSender.setAllowedToChat(true);
                     }
 
                     Message closeMsg = getCloseMsg("interrupted in getting transfer msg in day. - for " + getName());
 
-                    if (!isSilenced) {
-                        stopMsgReceiver();
-                        stopMsgSender();
-                    }
-                    System.out.println("Day time ended.going for vote...");
+                    stopMsgSender();
+
+                    System.out.println("Day time ended.going for vote...\n");
 
                 } else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_VOTE) // the incoming message for this must be in special format:
                 // player1Name,player2Name,player3Name,....
@@ -157,15 +165,20 @@ public class Player implements Serializable {
                     for (int i = 1; i <= split.length; i++) {
                         System.out.println(i + ") " + split[i - 1]);
                     }
-                    startMsgSender();
-                    startMsgReceiver();
+                    msgSender.setAllowedToChat(true);
+//                    startMsgReceiver();
 
                     Message closeMsg = getCloseMsg("interrupted in getting transfer msg. - voting time - for" + getName());
 
                     stopMsgSender();
-                    stopMsgReceiver();
+//                    stopMsgReceiver();
                     System.out.println("Voting time ended. The one who goes out is ...");
-                    msg = getMsg(); // result of voting
+                    try {
+                        msg = loopMsg.take(); // result of voting
+                    }catch (InterruptedException e)
+                    {
+                        System.out.println("Interrupted in taking vote result message.");
+                    }
 
                     System.out.print("\033[0;31m");
                     System.out.println(msg.getContent());
@@ -220,13 +233,14 @@ public class Player implements Serializable {
      * @param target is the name of target (if exists) , this parameter must be null when there is no target
      */
     public void sendMsg(String content , ChatroomType type , MessageTypes msgType , String target){
-
-        try{
-            outObj.writeObject(new Message(getName() , content , type , msgType , target));
-        }catch (IOException e)
-        {
-            Logger.log( this.getName()+ " can't send message with type " + type + " to server." ,
-                    LogLevels.ERROR , this.getClass().getName());
+        synchronized (outObj){
+            try{
+                outObj.writeObject(new Message(getName() , content , type , msgType , target));
+            }catch (IOException e)
+            {
+                Logger.log( this.getName()+ " can't send message with type " + type + " to server." ,
+                        LogLevels.ERROR , this.getClass().getName());
+            }
         }
     }
 
@@ -235,17 +249,20 @@ public class Player implements Serializable {
      * @return object message
      */
 
-    public Message getMsg(){
-        try
+    public synchronized Message getMsg(){
+        synchronized (inObj)
         {
-            return (Message)inObj.readObject();
-        }catch (IOException e){
-            Logger.log("can't get message object from server." , LogLevels.ERROR , getClass().getName());
+            try
+            {
+                return (Message)inObj.readObject();
+            }catch (IOException e){
+                Logger.log("can't get message object from server." , LogLevels.ERROR , getClass().getName());
+            }
+            catch (ClassNotFoundException e){
+                Logger.log("can't find the class Message." , LogLevels.ERROR , getClass().getName());
+            }
+            return null;
         }
-        catch (ClassNotFoundException e){
-            Logger.log("can't find the class Message." , LogLevels.ERROR , getClass().getName());
-        }
-        return null;
     }
 
     /**
@@ -283,7 +300,7 @@ public class Player implements Serializable {
      * to stop msgSender
      */
     public void stopMsgSender(){
-        msgSender.getThread().interrupt();
+        msgSender.setAllowedToChat(false);
     }
 
     /**
@@ -374,7 +391,7 @@ public class Player implements Serializable {
      */
     private Message getCloseMsg(String msg){
         try {
-            return closeChatroomMsg.take();
+            return nextStepMsg.take();
         }catch (InterruptedException e)
         {
             System.out.println(msg);

@@ -24,10 +24,13 @@ public class MsgSender {
      * @param msg the message to be sent
      */
     public void sendMsg(Message msg){
-        try {
-            outObj.writeObject((Object) msg);
-        }catch (IOException e){
-            Logger.log( "can't send message to client" , LogLevels.ERROR, getClass().getName());
+        synchronized (outObj)
+        {
+            try {
+                outObj.writeObject((Object) msg);
+            }catch (IOException e){
+                Logger.log( "can't send message to client" , LogLevels.ERROR, getClass().getName());
+            }
         }
     }
 

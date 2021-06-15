@@ -34,12 +34,14 @@ public class GameInit {
         System.out.println("For creating new server enter port: ");
         int port = 0;
         Server server = null;
+        Logic logic = null;
         while (true)
         {
             try {
                 port = scanner.nextInt();
                 try {
-                    server = new Server(port);
+                    logic = new Logic(null , null);
+                    server = new Server(port , logic);
                     System.out.println("Successful!");
                     System.out.println("Name : " + server.getName() + "\t\tip: 192.168.1.5(for local network) - 127.0.0.1(for one device)\t\tport: " + server.getWelcomeSocket().getLocalPort() + "\n");
                     break;
@@ -68,14 +70,8 @@ public class GameInit {
         {
             try {
                 System.out.println("Default game config is listed below , if you want to change it , enter 0 , else 1 :");
-                System.out.println("""
-                        Player numbers : 10
-                        Day time: 5 min
-                        Each role time at night: 15s
-                        Voting time: 30s
-                        Mafia number: 3
-                        Citizen number: 7
-                        """);
+                System.out.println("Player numbers : 10\nDay time: 5 min\nEach role time at night: 15s\nVoting time: 30s\n" +
+                                "Mafia number: 3\nCitizen number: 7");
                 int choice = scanner.nextInt();
                 if (choice == 1){
                     config = new Config();
@@ -192,8 +188,8 @@ public class GameInit {
         server.notifyList(server.getPlayers(), new Message(server.getName() , "start message to players." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_START , null));
         System.out.println("Start message sent to players.");
         GameState gameState = new GameState(config , server , StateEnum.FIRST_NIGHT , null); // at first , turnPlayer should be null
-        Logic logic = new Logic(server , gameState);
-        server.setLogic(logic);
+        logic.setGameState(gameState);
+        logic.setServer(server);
         GameLoop gameLoop = new GameLoop(server,logic ,gameState);
         gameLoop.playLoop();
     }

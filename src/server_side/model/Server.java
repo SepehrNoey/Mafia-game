@@ -34,7 +34,9 @@ public class Server {
      *
      * @param port is the port of server
      */
-    public Server(int port)throws IOException{
+    public Server(int port , Logic logic)throws IOException{
+        cancelMsg = new LinkedTransferQueue<>();
+        this.logic = logic;
         this.name = "God_" + port;
         welcomeSocket = new ServerSocket(port);
         players = new ArrayList<>();

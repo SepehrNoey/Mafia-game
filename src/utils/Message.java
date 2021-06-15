@@ -77,4 +77,5 @@ public class Message implements Serializable{
     public void setChatroomType(ChatroomType chatroomType) {
         this.chatroomType = chatroomType;
     }
+
 }

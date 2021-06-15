@@ -34,15 +34,18 @@ public class MsgReceiver implements Runnable {
      * @return received message from client
      */
     public Message getMsg(){
-        try {
-            return (Message) inObj.readObject();
-        }catch (ClassNotFoundException e){
-            Logger.log("can't find class Message" , LogLevels.ERROR , getClass().getName());
+        synchronized (inObj)
+        {
+            try {
+                return (Message) inObj.readObject();
+            }catch (ClassNotFoundException e){
+                Logger.log("can't find class Message" , LogLevels.ERROR , getClass().getName());
+            }
+            catch (IOException e){
+                Logger.log("server can't get message from " + name , LogLevels.ERROR , getClass().getName());
+            }
+            return null;
         }
-        catch (IOException e){
-            Logger.log("server can't get message from " + name , LogLevels.ERROR , getClass().getName());
-        }
-        return null;
     }
 
     @Override

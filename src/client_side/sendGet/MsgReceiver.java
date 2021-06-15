@@ -7,6 +7,7 @@ import utils.MessageTypes;
 import utils.logClasses.LogLevels;
 import utils.logClasses.Logger;
 
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
 /**
@@ -20,16 +21,25 @@ import java.util.concurrent.LinkedTransferQueue;
 public class MsgReceiver implements Runnable{
     private final Player player;
     private final Thread thread;
-    private LinkedTransferQueue<Message> closeChatroomMsg;
+    private LinkedTransferQueue<Message> nextStepMsg;
     private LinkedTransferQueue<Message> startMsg;
+    private LinkedTransferQueue<Message> loopMsg;
+    private ArrayBlockingQueue<Message> answerQueue;
+
+
     /**
      * constructor
      * @param player the player which wants to get message from server
+     * @param nextStepMsg next step msg
+     * @param startMsg start msg
+     * @param loopMsg loop msg
      */
-    public MsgReceiver(Player player , LinkedTransferQueue<Message> closeChatroomMsg , LinkedTransferQueue<Message> startMsg){
+    public MsgReceiver(Player player , LinkedTransferQueue<Message> nextStepMsg, LinkedTransferQueue<Message> startMsg , LinkedTransferQueue<Message> loopMsg , ArrayBlockingQueue<Message> answerQueue){
+        this.answerQueue = answerQueue;
         this.startMsg = startMsg;
         this.player = player;
-        this.closeChatroomMsg = closeChatroomMsg;
+        this.nextStepMsg = nextStepMsg;
+        this.loopMsg = loopMsg;
         thread = new Thread(this);
     }
 
@@ -48,9 +58,26 @@ public class MsgReceiver implements Runnable{
             Message msg = player.getMsg();
             if(msg != null)
             {
-                if(msg.getMsgType() == MessageTypes.CLOSE_CHATROOM){
+                if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_FIRST_NIGHT_GREETING || msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_NIGHT_ACT
+                || msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT || msg.getMsgType() == MessageTypes.ACTIONS_GOD_ORDERED_VOTE ||
+                        msg.getMsgType() == MessageTypes.TEAMMATES || msg.getMsgType() == MessageTypes.VOTE_RESULT || msg.getMsgType() == MessageTypes.END_OF_GAME)
+                {
                     try {
-                        closeChatroomMsg.transfer(msg);
+                        loopMsg.transfer(msg);
+                    }catch (InterruptedException e)
+                    {
+                        Logger.log("interrupted while transfering loopMsg." ,LogLevels.ERROR , getClass().getName());
+                    }
+                }
+                else if (msg.getMsgType() == MessageTypes.ACTIONS_GOD_SET_ROLE ){
+                    // must be in this format, for example:  'MAFIA_GROUP GODFATHER' , or it can be 'CITIZEN_GROUP DETECTIVE'
+                    String[] split = msg.getContent().trim().split(" ");
+                    player.setGroup(player.roleFromString(split[0]));
+                    player.setRole(player.roleFromString(split[1]));
+                }
+                else if(msg.getMsgType() == MessageTypes.CLOSE_CHATROOM){
+                    try {
+                        nextStepMsg.transfer(msg);
                         Logger.log("close chatroom message sent for " + player.getName() , LogLevels.INFO , getClass().getName());
                     }catch (InterruptedException e){
                         System.out.println("interrupted in transferring msg to player in msgReceiver - shouldn't happen.");
@@ -100,7 +127,12 @@ public class MsgReceiver implements Runnable{
                     System.out.print("\033[0;31m");
                     System.out.println(msg.getContent());
                     System.out.print("\033[0m");
-                    player.getMsgSender().answerQuestion(msg);  // may have bug here
+                    try {
+                        answerQueue.put(msg);
+                    }catch (InterruptedException e)
+                    {
+                        Logger.log(player.getName() +  " interrupted in answerQueue transferring" , LogLevels.ERROR ,getClass().getName());
+                    }
                 }
                 else
                 {

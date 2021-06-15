@@ -177,7 +177,7 @@ public class Logic implements Serializable {
     {
         for (Player_ServerSide player: server.getPlayers())
         {
-            if (player.getName().equals(msg.getTarget()) && player.getGroup() == Role_Group.CITIZEN_GROUP){ // null exception???
+            if (player.getName().equals(msg.getTarget())){ // null exception???
                 return true;
             }
         }
@@ -347,5 +347,21 @@ public class Logic implements Serializable {
             result += player.getName() + " was " + player.getRole() + "\n";
         }
         return winner + "\n\n" + result;
+    }
+
+    /**
+     * setter
+     * @param server created server
+     */
+    public void setServer(Server server) {
+        this.server = server;
+    }
+
+    /**
+     * setter
+     * @param gameState created gameState
+     */
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 }

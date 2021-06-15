@@ -25,7 +25,7 @@ public class GameLoop {
     }
 
     public void playLoop() {
-        sleep(1200 , "interrupted while sleeping in first of playLoop."); // to make sure that player has entered in its playLoop
+        sleep(3000 , "interrupted while sleeping in first of playLoop."); // to make sure that player has entered in its playLoop
         for (Player_ServerSide player: server.getPlayers())
         {
             server.notifyMember(player , new Message(server.getName(),player.getGroup() + " " + player.getRole() , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_SET_ROLE , null));
@@ -37,7 +37,7 @@ public class GameLoop {
                 server.handleEvents();
             }
             gameState.setState(StateEnum.DAY);
-            if (!logic.isFinished())
+            if (logic.isFinished())
                 break;
             day();
             gameState.setState(StateEnum.VOTING_TIME);
@@ -58,14 +58,14 @@ public class GameLoop {
             Player_ServerSide mayor = server.getRoleToPlayer().get(Role_Group.MAYOR);
             mayor.getMsgSender().sendMsg(new Message(server.getName(), server.getRoleToPlayer().containsKey(Role_Group.DOCTOR) ?
                     server.getRoleToPlayer().get(Role_Group.DOCTOR).getName() + "_as_Doctor," : "nobody," , ChatroomType.TO_CLIENT,
-                    MessageTypes.INFO , null));
+                    MessageTypes.TEAMMATES , null));
         }
         if (server.getRoleToPlayer().containsKey(Role_Group.DOCTOR))
         {
             Player_ServerSide doctor = server.getRoleToPlayer().get(Role_Group.DOCTOR);
             doctor.getMsgSender().sendMsg(new Message(server.getName(), server.getRoleToPlayer().containsKey(Role_Group.DOCTOR) ?
                     server.getRoleToPlayer().get(Role_Group.MAYOR).getName() + "_as_Mayor," : "nobody,",ChatroomType.TO_CLIENT,
-                    MessageTypes.INFO,
+                    MessageTypes.TEAMMATES,
                     null));
         }
         Player_ServerSide godfather = server.getRoleToPlayer().get(Role_Group.GODFATHER);
@@ -73,14 +73,14 @@ public class GameLoop {
         Player_ServerSide normalMaf = server.getRoleToPlayer().get(Role_Group.NORMAL_MAFIA);
         godfather.getMsgSender().sendMsg(new Message(server.getName(), (lecter != null && normalMaf != null) ? lecter.getName() + "_as_Doctor Lecter," + normalMaf + "_as_Normal Mafia," :
                 lecter != null ? lecter.getName() + "_as_Doctor Lecter," : normalMaf != null ? normalMaf.getName() + "_as_Normal Mafia," : "nobody," ,
-                ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                ChatroomType.TO_CLIENT , MessageTypes.TEAMMATES , null));
         if (lecter != null)
             lecter.getMsgSender().sendMsg(new Message(server.getName(), normalMaf!= null ? godfather.getName() + "_as_Godfather," + normalMaf.getName() + "_as_Normal Mafia," :
-                    godfather.getName() + "_as_Godfather," , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                    godfather.getName() + "_as_Godfather," , ChatroomType.TO_CLIENT , MessageTypes.TEAMMATES , null));
         // we have normal mafia just in first config mode
         if (gameState.getConfig().getPlayerNumbers() == 10)
-            normalMaf.getMsgSender().sendMsg(new Message(server.getName(), godfather.getName() + "_as_Godfathere," + lecter.getName() + "_as_Doctor Lecter," , ChatroomType.TO_CLIENT ,
-                    MessageTypes.INFO , null));
+            normalMaf.getMsgSender().sendMsg(new Message(server.getName(), godfather.getName() + "_as_Godfather," + lecter.getName() + "_as_Doctor Lecter," , ChatroomType.TO_CLIENT ,
+                    MessageTypes.TEAMMATES , null));
 
         sleep(3000 , "interrupted in end of first night.");
     }
@@ -143,8 +143,8 @@ public class GameLoop {
     }
 
     public void day(){
-        server.notifyList(server.getPlayers(), new Message(server.getName() ,"order for day" , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT , null));
-        server.notifyList(server.getGameWatchers(), new Message(server.getName() ,"order for day" , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT , null));
+        server.notifyList(server.getPlayers(), new Message(server.getName() ,"It's day now , you have " + gameState.getConfig().getDayTime() + " minutes to chat ..." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT , null));
+        server.notifyList(server.getGameWatchers(), new Message(server.getName() ,"It's day now , players are chatting..." , ChatroomType.TO_CLIENT , MessageTypes.ACTIONS_GOD_ORDERED_DAY_PUBLIC_CHAT , null));
 
         sleep(gameState.getConfig().getDayTime() * 60 * 1000 , "interrupted in day sleep.");
 
@@ -174,21 +174,22 @@ public class GameLoop {
                     ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
             server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Now , asking from mayor if wants to cancel the voting..." ,
                     ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
-            server.getRoleToPlayer().get(Role_Group.MAYOR).getMsgSender().sendMsg(new Message(server.getName(), "According to the result of voting , " + result[1] + " will be kicked out. Do you want to cancel voting?\n1) yes\n2) no" , ChatroomType.TO_CLIENT , MessageTypes.QUESTION_TO_CANCEL,null));
+            server.getRoleToPlayer().get(Role_Group.MAYOR).getMsgSender().sendMsg(new Message(server.getName(), "According to the result of voting , " + result[0] + " will be kicked out. Do you want to cancel voting?\n1) yes\n2) no" , ChatroomType.TO_CLIENT , MessageTypes.QUESTION_TO_CANCEL,null));
             try {
                 Message cancelOrNot = server.getCancelMsg().take();
                 if (cancelOrNot.getContent().equals("yes"))
                 {
-                    server.notifyList(server.getPlayers() , new Message(server.getName(), "Mayor canceled the voting this round!" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
-                    server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Mayor canceled the voting this round!" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                    server.notifyList(server.getPlayers() , new Message(server.getName(), "Mayor canceled the voting this round!" , ChatroomType.TO_CLIENT , MessageTypes.VOTE_RESULT , null));
+                    server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Mayor canceled the voting this round!" , ChatroomType.TO_CLIENT , MessageTypes.VOTE_RESULT
+                            , null));
                 }
                 else {
                     server.notifyList(server.getPlayers() , new Message(server.getName() , "Mayor didn't cancel the voting." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
                     server.notifyList(server.getGameWatchers() , new Message(server.getName() , "Mayor didn't cancel the voting." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
 
                     server.kickPlayer(result[0] , "Other players voted you to get out of game, Do you want to watch the rest of game?\n1) yes\n2) no");
-                    server.notifyList(server.getPlayers() , new Message(server.getName() , result[1] + " with "  + result[0] + " votes kicked out!" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
-                    server.notifyList(server.getGameWatchers() , new Message(server.getName() , result[1] + " with "  + result[0] + " votes kicked out!" , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+                    server.notifyList(server.getPlayers() , new Message(server.getName() , result[0] + " with "  + result[1] + " votes kicked out!" , ChatroomType.TO_CLIENT , MessageTypes.VOTE_RESULT , null));
+                    server.notifyList(server.getGameWatchers() , new Message(server.getName() , result[0] + " with "  + result[1] + " votes kicked out!" , ChatroomType.TO_CLIENT , MessageTypes.VOTE_RESULT , null));
                 }
 
             }catch (InterruptedException e){
@@ -197,8 +198,8 @@ public class GameLoop {
             }
         }
         else {
-            server.notifyList(server.getPlayers() , new Message(server.getName(), "Nobody gets out of game because of same number of votes ! Going for night..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
-            server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Nobody gets out of game because of same number of votes ! Going for night..." , ChatroomType.TO_CLIENT , MessageTypes.INFO , null));
+            server.notifyList(server.getPlayers() , new Message(server.getName(), "Nobody gets out of game because of same number of votes ! Going for night..." , ChatroomType.TO_CLIENT , MessageTypes.VOTE_RESULT , null));
+            server.notifyList(server.getGameWatchers() , new Message(server.getName(), "Nobody gets out of game because of same number of votes ! Going for night..." , ChatroomType.TO_CLIENT , MessageTypes.VOTE_RESULT , null));
         }
         sleep(3000 , "interrupted in end of voting sleep.");
     }
